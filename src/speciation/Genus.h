@@ -152,7 +152,7 @@ public:
                 }
             }
 
-            new_species_collection.add_species(species.clone_with_new_individuals(new_individuals));
+            new_species_collection.add_species(species.clone_with_new_individuals(std::move(new_individuals)));
 
             species_i++;
         }

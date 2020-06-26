@@ -74,7 +74,6 @@ TEST_CASE( "Instantiate a Genus with species" "[genus]")
                 evaluate
         );
     } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
-        FAIL();
+        FAIL(e.what());
     }
 }

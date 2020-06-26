@@ -50,13 +50,24 @@ public:
         this->age = age;
     }
 
+    Species(std::vector<I> &&individuals, int species_id, Age age, F best_fitness = 0.0)
+        : _id(species_id)
+        , age(age)
+        , last_best_fitness(best_fitness)
+    {
+        this->individuals.reserve(individuals.size());
+        for (I& individual: individuals) {
+            this->individuals.emplace_back(Indiv{std::nullopt, std::move(individual)});
+        }
+    }
+
     Species(const std::vector<I> &individuals, int species_id, F best_fitness = 0.0)
         : _id(species_id)
         , last_best_fitness(best_fitness)
     {
         this->individuals.reserve(individuals.size());
         for (const I& individual: individuals) {
-            this->individuals.push_back({std::nullopt, individual});
+            this->individuals.emplace_back(Indiv{std::nullopt, individual});
         }
     }
 
@@ -77,8 +88,22 @@ public:
      * @param new_individuals list of individuals that the new cloned species should have
      * @return the cloned species
      */
-    Species clone_with_new_individuals(std::vector<I> new_individuals) const {
+    Species clone_with_new_individuals(const std::vector<I> &new_individuals) const {
         return Species(new_individuals, id(), age, last_best_fitness);
+    }
+
+    /**
+     * Clone the current species with a new list of individuals.
+     * This function is necessary to produce the new generation.
+     *
+     * Updating the age of the species should have already been happened before this.
+     * This function will not update the age.
+     *
+     * @param new_individuals list of individuals that the new cloned species should have
+     * @return the cloned species
+     */
+    Species clone_with_new_individuals(std::vector<I> &&new_individuals) const {
+        return Species(std::move(new_individuals), id(), age, last_best_fitness);
     }
 
     /**
