@@ -20,6 +20,7 @@ TEST_CASE( "Instantiate a Genus with species" "[genus]")
     Genus<ChildIndividual,float> genus;
     std::vector<std::unique_ptr<ChildIndividual>> initial_population;// = {
     initial_population.reserve(10);
+    std::mt19937 gen(0);
 
     initial_population.emplace_back(std::make_unique<ChildIndividual>(0));
     initial_population.emplace_back(std::make_unique<ChildIndividual>(1));
@@ -47,9 +48,8 @@ TEST_CASE( "Instantiate a Genus with species" "[genus]")
         0.9
     };
 
-    srand(1);
-    auto selection = [&id_counter](auto begin, auto end) {
-        return tournament_selection<float>(begin, end, 2);
+    auto selection = [&id_counter, &gen](auto begin, auto end) {
+        return tournament_selection<float>(begin, end, gen, 2);
     };
     auto parent_selection = [&id_counter](auto begin, auto end) {
         return std::make_pair(begin,begin+1);
@@ -69,8 +69,9 @@ TEST_CASE( "Instantiate a Genus with species" "[genus]")
                                             unsigned int pop_amount) -> std::vector<std::unique_ptr<ChildIndividual>> {
         return std::vector<std::unique_ptr<ChildIndividual>>(std::move(new_pop));
     };
-    auto evaluate = [](ChildIndividual *new_indiv) {
-        float fit = float(rand()) / float(RAND_MAX);
+    auto evaluate = [&gen](ChildIndividual *new_indiv) {
+        static std::uniform_real_distribution<float> dis(0,1);
+        float fit = dis(gen);
         new_indiv->set_fitness(fit);
         return fit;
     };

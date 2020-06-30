@@ -35,14 +35,14 @@ inline std::optional<F> indiv_fitness(Iter& indiv)
  * @param k amount of individuals to participate in the tournament
  * @return tournament selected element, iterator of it
  */
-template<typename F, typename Iter, typename std::optional<F> Fitness(Iter&) = indiv_fitness<F, Iter> >
-Iter tournament_selection(const Iter begin, const Iter end, unsigned int k = 2)
+template<typename F, typename Iter, typename std::optional<F> Fitness(Iter&) = indiv_fitness<F, Iter>, typename RandomGenerator >
+Iter tournament_selection(const Iter begin, const Iter end, RandomGenerator &g, unsigned int k = 2)
 {
     Iter best = end;
     if (begin == end) throw std::invalid_argument("Source selection cannot be empty");
     assert(k > 0);
     for (int i = 0; i < k; i++) {
-        Iter candidate = select_randomly(begin, end);
+        Iter candidate = select_randomly(begin, end, g);
         if (best == end or Fitness(candidate) > Fitness(best)) {
             best = candidate;
         }

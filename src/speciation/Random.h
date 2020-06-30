@@ -24,13 +24,4 @@ Iter select_randomly(Iter start, Iter end, RandomGenerator& g) {
     return start;
 }
 
-//TODO remove, use a repeatable random generator
-template<typename Iter>
-Iter select_randomly(Iter start, Iter end) {
-    static std::random_device rd;
-    static std::mt19937 gen(rd());
-    return select_randomly(start, end, gen);
-}
-
-
 #endif //SPECIATION_RANDOM_H
