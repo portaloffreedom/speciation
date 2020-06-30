@@ -38,7 +38,7 @@ jobs:
       run: cmake --build build/
     - name: test
       run: |
-        pwd
+        echo $PWD
         ls
         ./species_test
       working-directory: speciation/build/tests
