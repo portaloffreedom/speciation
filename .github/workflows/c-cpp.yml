@@ -22,7 +22,10 @@ jobs:
         repository: catchorg/Catch2
         path: Catch2
     - name: configure catch2
-      run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCATCH_BUILD_TESTING=OFF
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCATCH_BUILD_TESTING=OFF
       working-directory: Catch2
     - name: compile and install catch2
       run: sudo cmake --build build/ --target install 
@@ -33,13 +36,19 @@ jobs:
       working-directory: Catch2
       if: matrix.os == 'windows-latest'
     - name: cmake ${{ matrix.build_type }}
-      run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
     - name: compile
       run: cmake --build build/
     - name: test
-      run: |
-        echo $PWD
-        ls -lR
-        ./species_test
+      run: ./species_test
+      working-directory: build/tests
+      if: matrix.os != 'windows-latest'
+    - name: test
+      run: ./Debug/species_test
       working-directory: build/tests
       shell: bash
+      if: matrix.os == 'windows-latest'
+      
