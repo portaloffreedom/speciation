@@ -21,10 +21,10 @@ jobs:
       run: git clone https://github.com/catchorg/Catch2.git
       working-directory: /tmp
     - name: configure catch2
-      run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCATCH_BUILD_TESTING=OFF
       working-directory: /tmp/Catch2
     - name: compile and install catch2
-      run: sudo make install
+      run: make 
       working-directory: /tmp/Catch2/build
     - name: cmake ${{ matrix.build_type }}
       run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
