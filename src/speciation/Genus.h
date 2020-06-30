@@ -29,7 +29,7 @@ public:
      * Creates a new Genus object
      */
     Genus()
-    : next_species_id(1)
+            : next_species_id(1)
     {}
 
     /**
@@ -37,10 +37,31 @@ public:
      * @param species_collection
      * @param next_species_id id of the next new species
      */
-    Genus(SpeciesCollection<I,F> species_collection, unsigned int next_species_id)
-    : next_species_id(next_species_id)
-    , species_collection(std::move(species_collection))
+    Genus(SpeciesCollection<I, F> species_collection, unsigned int next_species_id)
+            : next_species_id(next_species_id)
+            , species_collection(std::move(species_collection))
     {}
+
+    /**
+     * Move constructor
+     */
+    Genus(Genus &&other) noexcept
+            : next_species_id(other.next_species_id)
+            , species_collection(std::move(other.species_collection))
+    {}
+
+    /**
+     * Move assignment
+     */
+    Genus& operator=(Genus &&other) noexcept
+    {
+        if (this == &other)
+            return *this;
+
+        next_species_id = other.next_species_id;
+        species_collection = std::move(other.species_collection);
+        return *this;
+    }
 
     /**
      * Creates the species. It takes a list of individuals and splits them into multiple species,

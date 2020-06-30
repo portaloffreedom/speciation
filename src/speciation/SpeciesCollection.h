@@ -39,12 +39,30 @@ public:
         best = collection.end();
     }
 
+    /**
+     * Move constructor
+     * @param other
+     */
     SpeciesCollection(SpeciesCollection &&other)
         : collection(std::move(collection))
         , best(std::move(other.best))
         , cache_need_updating(other.cache_need_updating)
     {
         assert(this != &other);
+    }
+
+    /**
+     * Move assignment
+     */
+    SpeciesCollection& operator=(SpeciesCollection &&other) noexcept
+    {
+        if (this == &other)
+            return *this;
+
+        collection = std::move(other.collection);
+        best = std::move(other.best);
+        cache_need_updating = other.cache_need_updating;
+        return *this;
     }
 
     /**
