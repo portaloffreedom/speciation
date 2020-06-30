@@ -41,13 +41,13 @@ jobs:
         cd build
         cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
     - name: compile
-      run: cmake --build build/
+      run: cmake --build build/ --config ${{ matrix.build_type }}
     - name: test
       run: ./species_test
       working-directory: build/tests
       if: matrix.os != 'windows-latest'
     - name: test
-      run: ./Debug/species_test
+      run: ./${{ matrix.build_type }}/species_test
       working-directory: build/tests
       shell: bash
       if: matrix.os == 'windows-latest'
