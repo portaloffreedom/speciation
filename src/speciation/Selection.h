@@ -8,6 +8,7 @@
 #include <cassert>
 #include <vector>
 #include <functional>
+#include <optional>
 #include <set>
 #include <sstream>
 #include "Random.h"

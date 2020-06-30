@@ -251,7 +251,7 @@ private:
     F individual_adjusted_fitness(F fitness, bool is_best_species, const Conf& conf) {
         // set small fitness if it is absent
         if (fitness == 0)
-            fitness = 0.0001;
+            fitness = static_cast<F>(0.0001);
 
         // update the best fitness and stagbnation counter
         if (fitness >= this->last_best_fitness) {
@@ -272,7 +272,7 @@ private:
         // Extreme penalty if this species is stagnating for too long time
         // one exception if this is the best species found so far
         if (!is_best_species && age.no_improvements() > conf.species_max_stagnation) {
-            fitness *= 0.0000001;
+            fitness *= static_cast<F>(0.0000001);
         }
 
         return fitness;

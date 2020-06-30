@@ -7,17 +7,15 @@
 #include "speciation/Genus.h"
 #include "test_individuals.h"
 
-using namespace speciation;
-
 TEST_CASE( "Instantiate a Genus" "[genus]")
 {
-    Genus<Individual42,float> genus;
+    speciation::Genus<Individual42,float> genus;
     REQUIRE(genus.size() == 0);
 }
 
 TEST_CASE( "Instantiate a Genus with species" "[genus]")
 {
-    Genus<ChildIndividual,float> genus;
+    speciation::Genus<ChildIndividual,float> genus;
     std::vector<std::unique_ptr<ChildIndividual>> initial_population;// = {
     initial_population.reserve(10);
     std::mt19937 gen(0);
@@ -38,7 +36,7 @@ TEST_CASE( "Instantiate a Genus with species" "[genus]")
     genus.speciate(initial_population.begin(), initial_population.end());
     REQUIRE(initial_population.size() == genus.count_individuals());
 
-    const Conf conf {
+    const speciation::Conf conf {
         static_cast<unsigned int>(initial_population.size()),
         true,
         2,
@@ -49,7 +47,7 @@ TEST_CASE( "Instantiate a Genus with species" "[genus]")
     };
 
     auto selection = [&id_counter, &gen](auto begin, auto end) {
-        return tournament_selection<float>(begin, end, gen, 2);
+        return speciation::tournament_selection<float>(begin, end, gen, 2);
     };
     auto parent_selection = [&id_counter](auto begin, auto end) {
         return std::make_pair(begin,begin+1);
@@ -77,7 +75,7 @@ TEST_CASE( "Instantiate a Genus with species" "[genus]")
     };
 
     try {
-        Genus genus1 = genus.next_generation(
+        speciation::Genus genus1 = genus.next_generation(
                 conf,
                 selection,
                 parent_selection,
