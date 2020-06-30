@@ -24,7 +24,7 @@ jobs:
       run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCATCH_BUILD_TESTING=OFF
       working-directory: /tmp/Catch2
     - name: compile and install catch2
-      run: make 
+      run: sudo make install
       working-directory: /tmp/Catch2/build
     - name: cmake ${{ matrix.build_type }}
       run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
