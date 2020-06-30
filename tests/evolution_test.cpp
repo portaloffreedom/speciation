@@ -142,7 +142,7 @@ public:
 TEST_CASE("Test evolutionary run" "[integration]")
 {
     speciation::Genus<Individual,float> genus;
-    std::vector<std::unique_ptr<Individual>> initial_population;
+    std::vector<std::unique_ptr<Individual> > initial_population;
     initial_population.reserve(100);
 
     const size_t GENOME_SIZE = 500;
@@ -186,10 +186,10 @@ TEST_CASE("Test evolutionary run" "[integration]")
         indiv.mutate(gen);
     };
     // generational population manager
-    auto population_manager = [&id_counter](std::vector<std::unique_ptr<Individual>> &&new_pop,
+    auto population_manager = [&id_counter](std::vector<std::unique_ptr<Individual> > &&new_pop,
                                             const std::vector<const Individual*> &old_pop,
-                                            unsigned int pop_amount) -> std::vector<std::unique_ptr<Individual>> {
-        return std::vector<std::unique_ptr<Individual>>(std::move(new_pop));
+                                            unsigned int pop_amount) -> std::vector<std::unique_ptr<Individual> > {
+        return std::vector<std::unique_ptr<Individual> >(std::move(new_pop));
     };
     auto evaluate = [&best_fitness](Individual *new_indiv) {
         float fitness = new_indiv->evaluate();

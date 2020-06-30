@@ -10,11 +10,11 @@
 
 TEST_CASE("Tournament selection" "[selection]")
 {
-    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
-    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::const_iterator CIter;
     std::mt19937 gen(0);
 
-    std::vector<std::unique_ptr<IndividualF>> population;
+    std::vector<std::unique_ptr<IndividualF> > population;
     population.emplace_back(std::make_unique<IndividualF>(1, 1));
     population.emplace_back(std::make_unique<IndividualF>(2, 2));
     population.emplace_back(std::make_unique<IndividualF>(3, 3));
@@ -34,11 +34,11 @@ TEST_CASE("Tournament selection" "[selection]")
 
 TEST_CASE("Tournament selection points to the original source" "[selection]")
 {
-    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
-    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::const_iterator CIter;
     std::mt19937 gen(0);
 
-    std::vector<std::unique_ptr<IndividualF>> population;
+    std::vector<std::unique_ptr<IndividualF> > population;
     population.emplace_back(std::make_unique<IndividualF>(1, 1));
     population.emplace_back(std::make_unique<IndividualF>(2, 2));
     population.emplace_back(std::make_unique<IndividualF>(3, 3));
@@ -60,12 +60,12 @@ fitness_ref_wrapper(std::vector<std::reference_wrapper<std::unique_ptr<NonCopiab
 
 TEST_CASE("Tournament selection with a non copiable individual" "[selection]")
 {
-    typedef std::forward_list<std::unique_ptr<NonCopiableIndividual>>::iterator Iter;
-    typedef std::forward_list<std::unique_ptr<NonCopiableIndividual>>::const_iterator CIter;
+    typedef std::forward_list<std::unique_ptr<NonCopiableIndividual> >::iterator Iter;
+    typedef std::forward_list<std::unique_ptr<NonCopiableIndividual> >::const_iterator CIter;
     std::mt19937 gen(0);
 
     //std::vector requires its inside elements to be copiable
-    std::forward_list<std::unique_ptr<NonCopiableIndividual>> population;
+    std::forward_list<std::unique_ptr<NonCopiableIndividual> > population;
     population.emplace_front(std::make_unique<NonCopiableIndividual>(1, 1.));
     population.emplace_front(std::make_unique<NonCopiableIndividual>(2, 2.));
     population.emplace_front(std::make_unique<NonCopiableIndividual>(3, 3.));
@@ -96,13 +96,13 @@ TEST_CASE("Tournament selection with a non copiable individual" "[selection]")
 
 TEST_CASE("Tournament selection exception on empty set" "[selection]")
 {
-    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
-    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::const_iterator CIter;
     std::mt19937 gen(0);
 
     constexpr auto tournament = &speciation::tournament_selection<float, Iter, speciation::standard_fitness, std::mt19937>;
 
-    std::vector<std::unique_ptr<IndividualF>> population = {};
+    std::vector<std::unique_ptr<IndividualF> > population = {};
     REQUIRE_THROWS_AS(
             tournament(population.begin(), population.end(), gen, 2),
             std::invalid_argument
@@ -111,11 +111,11 @@ TEST_CASE("Tournament selection exception on empty set" "[selection]")
 
 TEST_CASE("Tournament selection should be able to all elements" "[selection]")
 {
-    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
-    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::const_iterator CIter;
     std::mt19937 gen(0);
 
-    std::vector<std::unique_ptr<IndividualF>> population;
+    std::vector<std::unique_ptr<IndividualF> > population;
     population.emplace_back(std::make_unique<IndividualF>(1, 1));
     population.emplace_back(std::make_unique<IndividualF>(2, 2));
     population.emplace_back(std::make_unique<IndividualF>(3, 3));
@@ -138,16 +138,16 @@ TEST_CASE("Tournament selection should be able to all elements" "[selection]")
 
 TEST_CASE("Multiple selection with duplicates" "[selection]")
 {
-    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
-    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::const_iterator CIter;
     std::mt19937 gen(0);
 
-    std::vector<std::unique_ptr<IndividualF>> source;
+    std::vector<std::unique_ptr<IndividualF> > source;
     source.emplace_back(std::make_unique<IndividualF>(1, 1));
     source.emplace_back(std::make_unique<IndividualF>(2, 2));
     source.emplace_back(std::make_unique<IndividualF>(3, 3));
 
-    std::vector<std::unique_ptr<IndividualF>> destination(4);
+    std::vector<std::unique_ptr<IndividualF> > destination(4);
 
     // This is mostly a compilation test on how templates are working
 
@@ -172,8 +172,8 @@ TEST_CASE("Multiple selection with duplicates" "[selection]")
     speciation::multiple_selection_with_duplicates(
             source.begin(), source.end(),
             destination.begin(), destination.end(),
-            [&gen](std::vector<std::unique_ptr<IndividualF>>::iterator begin,
-               std::vector<std::unique_ptr<IndividualF>>::iterator end) {
+            [&gen](std::vector<std::unique_ptr<IndividualF> >::iterator begin,
+               std::vector<std::unique_ptr<IndividualF> >::iterator end) {
                 return speciation::tournament_selection<float, CIter, speciation::standard_fitness>(begin, end, gen, 3);
             }
     );
@@ -189,16 +189,16 @@ TEST_CASE("Multiple selection with duplicates" "[selection]")
 
 TEST_CASE("Multiple selection with no duplicates" "[selection]")
 {
-    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
-    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::const_iterator CIter;
     std::mt19937 gen(0);
 
-    std::vector<std::unique_ptr<IndividualF>> source;
+    std::vector<std::unique_ptr<IndividualF> > source;
     source.emplace_back(std::make_unique<IndividualF>(1, 1));
     source.emplace_back(std::make_unique<IndividualF>(2, 2));
     source.emplace_back(std::make_unique<IndividualF>(3, 3));
 
-    std::vector<std::unique_ptr<IndividualF>> destination(3);
+    std::vector<std::unique_ptr<IndividualF> > destination(3);
 
     // This is mostly a compilation test on how templates are working
 
@@ -245,16 +245,16 @@ TEST_CASE("Multiple selection with no duplicates" "[selection]")
 
 TEST_CASE("Multiple selection with no duplicates should throw an exception when destination is too big" "[selection]")
 {
-    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
-    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF> >::const_iterator CIter;
     std::mt19937 gen(0);
 
-    std::vector<std::unique_ptr<IndividualF>> source;
+    std::vector<std::unique_ptr<IndividualF> > source;
     source.emplace_back(std::make_unique<IndividualF>(1, 1));
     source.emplace_back(std::make_unique<IndividualF>(2, 2));
     source.emplace_back(std::make_unique<IndividualF>(3, 3));
 
-    std::vector<std::unique_ptr<IndividualF>> destination(4);
+    std::vector<std::unique_ptr<IndividualF> > destination(4);
     REQUIRE_THROWS_AS(
             speciation::multiple_selection_no_duplicates(
                     source.begin(), source.end(),

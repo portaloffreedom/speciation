@@ -112,7 +112,7 @@ public:
      * @param new_individuals list of individuals that the new cloned species should have
      * @return the cloned species
      */
-    Species clone_with_new_individuals(std::vector<std::unique_ptr<I>> &&new_individuals) const {
+    Species clone_with_new_individuals(std::vector<std::unique_ptr<I> > &&new_individuals) const {
         return Species(new_individuals.begin(), new_individuals.end(), id(), age, last_best_fitness);
     }
 
@@ -145,7 +145,7 @@ public:
      * @return the best individual of the species
      */
     const_iterator get_best_individual() const {
-        assert( not this->empty() );
+        assert(!this->empty());
 
         return std::max_element(
                 this->individuals.begin(),
@@ -163,7 +163,7 @@ public:
      * @return the representative individual
      */
     const I& representative() const {
-        assert(not this->empty());
+        assert(!this->empty());
         return *individuals.front().individual;
     }
 
@@ -174,7 +174,7 @@ public:
      * @param is_best_species true if this is the best species
      */
     void adjust_fitness(bool is_best_species, const Conf& conf) {
-        assert( not this->empty() );
+        assert( !this->empty() );
 
         // Iterates through individuals and sets the adjusted fitness (second parameter of the pair)
         for (Indiv &i: individuals) {
@@ -203,7 +203,7 @@ public:
     /**
      * Replaces set of individuals with a new set of individuals
      */
-     void set_individuals(std::vector<std::unique_ptr<I>> &&new_individuals)
+     void set_individuals(std::vector<std::unique_ptr<I> > &&new_individuals)
      {
         individuals.clear();
         individuals.reserve(new_individuals.size());
@@ -271,7 +271,7 @@ private:
 
         // Extreme penalty if this species is stagnating for too long time
         // one exception if this is the best species found so far
-        if (not is_best_species && age.no_improvements() > conf.species_max_stagnation) {
+        if (!is_best_species && age.no_improvements() > conf.species_max_stagnation) {
             fitness *= 0.0000001;
         }
 

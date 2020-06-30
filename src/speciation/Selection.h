@@ -64,7 +64,7 @@ Iter tournament_selection(const Iter begin, const Iter end, RandomGenerator &g, 
  * @param destination_end
  * @param selection_function which function to use for selection
  */
-template<typename IterSrc, typename IterDest = IterSrc, typename Selection = std::function<IterSrc(IterSrc, IterSrc)>>
+template<typename IterSrc, typename IterDest = IterSrc, typename Selection = std::function<IterSrc(IterSrc, IterSrc)> >
 void multiple_selection_no_duplicates(
         const IterSrc population_begin,
         const IterSrc population_end,
@@ -112,7 +112,7 @@ void multiple_selection_no_duplicates(
  * @param destination_end
  * @param selection_function which function to use for selection
  */
-template<typename IterSrc, typename IterDest = IterSrc, typename Selection = std::function<IterSrc(IterSrc, IterSrc)>>
+template<typename IterSrc, typename IterDest = IterSrc, typename Selection = std::function<IterSrc(IterSrc, IterSrc)> >
 void multiple_selection_with_duplicates(
         const IterSrc population_begin,
         const IterSrc population_end,

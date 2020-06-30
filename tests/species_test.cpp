@@ -12,7 +12,7 @@ using namespace speciation;
 
 TEST_CASE("Species compile and are not broken" "[species]")
 {
-    std::vector<std::unique_ptr<Individual42>> initial_population;
+    std::vector<std::unique_ptr<Individual42> > initial_population;
     initial_population.emplace_back(std::make_unique<Individual42>(41));
     Species<Individual42, float> species = Species<Individual42, float>(
             initial_population.begin(), initial_population.end(),
@@ -112,7 +112,7 @@ TEST_CASE("Exception thrown with negative fitness" "[species]")
 
 TEST_CASE("Species iterator" "[species]")
 {
-    std::vector<std::unique_ptr<IndividualOptionalF>> individuals;
+    std::vector<std::unique_ptr<IndividualOptionalF> > individuals;
     individuals.emplace_back(std::make_unique<IndividualOptionalF>(41, 22));
     individuals.emplace_back(std::make_unique<IndividualOptionalF>(42, 21.1));
     individuals.emplace_back(std::make_unique<IndividualOptionalF>(43, 22.1));

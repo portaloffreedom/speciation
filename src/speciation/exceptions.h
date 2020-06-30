@@ -29,7 +29,7 @@ public:
             _message << "Invalid fitness, no value present ";
         }
 
-        if (not message.empty()) {
+        if (! message.empty()) {
             _message << " (" << reason << ')';
         }
 

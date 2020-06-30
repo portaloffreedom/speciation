@@ -64,10 +64,10 @@ TEST_CASE( "Instantiate a Genus with species" "[genus]")
         /*mutate*/
     };
     // generational population manager
-    auto population_manager = [&id_counter](std::vector<std::unique_ptr<ChildIndividual>> &&new_pop,
+    auto population_manager = [&id_counter](std::vector<std::unique_ptr<ChildIndividual> > &&new_pop,
                                             const std::vector<const ChildIndividual*> &old_pop,
-                                            unsigned int pop_amount) -> std::vector<std::unique_ptr<ChildIndividual>> {
-        return std::vector<std::unique_ptr<ChildIndividual>>(std::move(new_pop));
+                                            unsigned int pop_amount) -> std::vector<std::unique_ptr<ChildIndividual> > {
+        return std::vector<std::unique_ptr<ChildIndividual> >(std::move(new_pop));
     };
     auto evaluate = [&gen](ChildIndividual *new_indiv) {
         static std::uniform_real_distribution<float> dis(0,1);

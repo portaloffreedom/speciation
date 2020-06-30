@@ -127,13 +127,13 @@ public:
             const std::function<std::unique_ptr<I>(const I&)> &reproduce_individual_1,
             const std::function<std::unique_ptr<I>(const I&, const I&)> &crossover_individual_2,
             const std::function<void(I&)> &mutate_individual,
-            const std::function<std::vector<std::unique_ptr<I>>(std::vector<std::unique_ptr<I>> &&new_individuals, const std::vector<const I*>&old_individuals, unsigned int target_population)> &population_management,
+            const std::function<std::vector<std::unique_ptr<I> >(std::vector<std::unique_ptr<I> > &&new_individuals, const std::vector<const I*>&old_individuals, unsigned int target_population)> &population_management,
             const std::function<F(I*)> &evaluate_individual)
     {
         for (Species<I, F> &species: species_collection) {
             for (typename Species<I, F>::Indiv &i : species) {
                 std::optional<F> ready_fitness = i.individual->fitness();
-                if (not ready_fitness.has_value()) {
+                if (!ready_fitness.has_value()) {
                     F fitness = evaluate_individual(i.individual.get());
                     std::optional<F> individual_fitness = i.individual->fitness();
                     assert(individual_fitness.has_value());
@@ -153,13 +153,13 @@ public:
 
         // Clone Species
         SpeciesCollection<I, F> new_species_collection;
-        std::vector<std::unique_ptr<I>> orphans;
+        std::vector<std::unique_ptr<I> > orphans;
 
         // Pointers to values in new_species_collection and orphans
         std::vector<I*> need_evaluation;
 
         // Pointers to current const species_collection
-        std::vector<std::vector<const I*>> old_species_individuals;
+        std::vector<std::vector<const I*> > old_species_individuals;
 
         //////////////////////////////////////////////
         /// GENERATE NEW INDIVIDUALS
@@ -173,7 +173,7 @@ public:
                     [](const typename Species<I,F>::Indiv &i)
                     { return i.individual.get(); });
 
-            std::vector<std::unique_ptr<I>> new_individuals;
+            std::vector<std::unique_ptr<I> > new_individuals;
 
             for (unsigned int n_offspring = 0; n_offspring < offspring_amounts[species_i]; n_offspring++) {
                 std::unique_ptr<I> new_individual = _generate_new_individual(
@@ -226,7 +226,7 @@ public:
                     break;
                 }
             }
-            if (not compatible_species_found) {
+            if (!compatible_species_found) {
                 Species<I, F> new_species = Species<I, F>(std::move(orphan), next_species_id);
                 next_species_id++;
                 new_species_collection.add_species(std::move(new_species));
@@ -253,14 +253,14 @@ public:
                 break;
             }
 
-            std::vector<std::unique_ptr<I>> new_species_individuals(new_species.size());
+            std::vector<std::unique_ptr<I> > new_species_individuals(new_species.size());
             // this empties the new_species list
             std::transform(new_species.begin(), new_species.end(),
                            new_species_individuals.begin(),
                            [](typename Species<I, F>::Indiv &i) { return std::move(i.individual); });
 
             // Create next population
-            std::vector<std::unique_ptr<I>> new_individuals
+            std::vector<std::unique_ptr<I> > new_individuals
                     = population_management(std::move(new_species_individuals),
                                             old_species_individuals[species_i],
                                             offspring_amounts[species_i]);
@@ -467,7 +467,7 @@ private:
             std::set<unsigned int> excluded_id_list;
 
             while (excess_offspring > 0) {
-                typename std::vector<Species<I, F>>::iterator worst_species =
+                typename std::vector<Species<I, F> >::iterator worst_species =
                         species_collection.get_worst(1, excluded_id_list);
                 size_t worst_species_i = std::distance(species_collection.begin(), worst_species);
                 int current_amount = species_offspring_amount[worst_species_i];
