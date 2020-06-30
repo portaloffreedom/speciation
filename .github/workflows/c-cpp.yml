@@ -17,9 +17,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: install dependencies
-      run: sudo apt-get update && sudo apt-get upgrade -y && sudo apt-get install -y catch2
-      if: ${{ matrix.os }} == ubuntu-latest
+    - name: download catch2
+      run: git clone https://github.com/catchorg/Catch2.git
+      working-directory: /tmp
+    - name: configure catch2
+      run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      working-directory: /tmp/Catch2
+    - name: compile and install catch2
+      run: sudo make install
+      working-directory: /tmp/Catch2/build
     - name: cmake ${{ matrix.build_type }}
       run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
     - name: make
