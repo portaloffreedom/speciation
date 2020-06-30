@@ -18,7 +18,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: actions/checkout@v2
-      id: download catch2
       with:
         repository: catchorg/Catch2
         path: Catch2
