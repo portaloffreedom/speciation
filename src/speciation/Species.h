@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <memory>
 #include <limits>
 #include <vector>
 #include "Age.h"
@@ -28,7 +29,19 @@ class Species {
 public:
     struct Indiv {
         std::optional<F> adjusted_fitness;
-        I individual;
+        std::unique_ptr<I> individual;
+        Indiv() = delete;
+        Indiv(const Indiv&) = delete;
+        Indiv& operator=(const Indiv&) = delete;
+
+        Indiv(std::unique_ptr<I> &&indiv)
+            : adjusted_fitness(std::nullopt)
+            , individual(std::move(indiv))
+        {}
+        Indiv(Indiv&& other)
+                : adjusted_fitness(other.adjusted_fitness)
+                , individual(std::move(other.individual))
+        {};
     };
     typedef typename std::vector<Indiv>::iterator iterator;
     typedef typename std::vector<Indiv>::const_iterator const_iterator;
@@ -40,42 +53,53 @@ private:
     unsigned int _id;
     /// `Age` of this species
     Age age;
-    ///TODO
+    ///TODO documentation
     F last_best_fitness;
 
 public:
-    Species(const std::vector<I> &individuals, int species_id, Age age, F best_fitness = 0.0)
-        : Species(individuals, species_id, best_fitness)
-    {
-        this->age = age;
-    }
 
-    Species(std::vector<I> &&individuals, int species_id, Age age, F best_fitness = 0.0)
+    template <typename Iter>
+    Species(Iter begin_population, Iter end_population, int species_id, Age age = Age(), F best_fitness = 0.0)
         : _id(species_id)
         , age(age)
         , last_best_fitness(best_fitness)
     {
-        this->individuals.reserve(individuals.size());
-        for (I& individual: individuals) {
-            this->individuals.emplace_back(Indiv{std::nullopt, std::move(individual)});
+        this->individuals.reserve(std::distance(begin_population, end_population));
+        for (; begin_population != end_population; begin_population++) {
+            std::unique_ptr<I> &individual = *begin_population;
+            this->individuals.emplace_back(std::move(individual));
         }
     }
 
-    Species(const std::vector<I> &individuals, int species_id, F best_fitness = 0.0)
+    Species(std::unique_ptr<I> &&individual, int species_id)
         : _id(species_id)
-        , last_best_fitness(best_fitness)
-    {
-        this->individuals.reserve(individuals.size());
-        for (const I& individual: individuals) {
-            this->individuals.emplace_back(Indiv{std::nullopt, individual});
-        }
-    }
-
-    Species(const I &individual, int species_id)
-        : _id(species_id)
+        , age()
         , last_best_fitness(0.0)
     {
-        this->individuals.emplace_back(Indiv{std::nullopt, individual});
+        this->individuals.emplace_back(std::move(individual));
+    }
+
+    Species() = delete;
+    Species(const Species &) = delete;
+    Species(Species &&other) noexcept
+            : _id(other._id)
+            , age(age)
+            , last_best_fitness(0.0)
+            , individuals(std::move(other.individuals))
+    {}
+
+    Species& operator=(const Species &) noexcept = delete;
+    Species& operator=(Species &&other) noexcept
+    {
+        _id = other._id;
+        age = other.age;
+        last_best_fitness = other.last_best_fitness;
+        individuals = std::move(other.individuals);
+
+        other._id = 0;
+        other.age = Age();
+        other.last_best_fitness = 0.0;
+        return *this;
     }
 
     /**
@@ -88,22 +112,8 @@ public:
      * @param new_individuals list of individuals that the new cloned species should have
      * @return the cloned species
      */
-    Species clone_with_new_individuals(const std::vector<I> &new_individuals) const {
-        return Species(new_individuals, id(), age, last_best_fitness);
-    }
-
-    /**
-     * Clone the current species with a new list of individuals.
-     * This function is necessary to produce the new generation.
-     *
-     * Updating the age of the species should have already been happened before this.
-     * This function will not update the age.
-     *
-     * @param new_individuals list of individuals that the new cloned species should have
-     * @return the cloned species
-     */
-    Species clone_with_new_individuals(std::vector<I> &&new_individuals) const {
-        return Species(std::move(new_individuals), id(), age, last_best_fitness);
+    Species clone_with_new_individuals(std::vector<std::unique_ptr<I>> &&new_individuals) const {
+        return Species(new_individuals.begin(), new_individuals.end(), id(), age, last_best_fitness);
     }
 
     /**
@@ -126,7 +136,7 @@ public:
         static_assert(std::numeric_limits<F>::has_infinity, "Fitness value does not have infinity");
         if (this->empty())
             return -std::numeric_limits<F>::infinity();
-        return this->get_best_individual()->individual.fitness();
+        return this->get_best_individual()->individual->fitness();
     }
 
     /**
@@ -142,7 +152,7 @@ public:
                 this->individuals.end(),
                 [](const Indiv& a, const Indiv& b)
             {
-                return a.individual.fitness() < b.individual.fitness();
+                return a.individual->fitness() < b.individual->fitness();
             }
         );
     }
@@ -154,7 +164,7 @@ public:
      */
     const I& representative() const {
         assert(not this->empty());
-        return individuals.front().individual;
+        return *individuals.front().individual;
     }
 
     /**
@@ -168,7 +178,7 @@ public:
 
         // Iterates through individuals and sets the adjusted fitness (second parameter of the pair)
         for (Indiv &i: individuals) {
-            std::optional<F> retrieved_fitness = i.individual.fitness();
+            std::optional<F> retrieved_fitness = i.individual->fitness();
             F fitness = retrieved_fitness.value_or(0);
             //TODO can we make this work with negative fitnesses?
             if(fitness < 0) {
@@ -186,22 +196,19 @@ public:
      * Inserts an individual into this species
      * @param individual
      */
-    void insert(I individual) {
-        this->individuals.emplace_back(Indiv {
-            std::nullopt,
-            individual,
-        });
+    void insert(std::unique_ptr<I> &&individual) {
+        this->individuals.emplace_back(std::move(individual));
     }
 
     /**
      * Replaces set of individuals with a new set of individuals
      */
-     void set_individuals(const std::vector<I> &new_individuals)
+     void set_individuals(std::vector<std::unique_ptr<I>> &&new_individuals)
      {
         individuals.clear();
         individuals.reserve(new_individuals.size());
-        for (const I &individual: new_individuals) {
-            individuals.emplace_back(Indiv{std::nullopt, individual});
+        for (std::unique_ptr<I> &individual: new_individuals) {
+            individuals.emplace_back(std::move(individual));
         }
         individuals.shrink_to_fit();
      }
@@ -311,10 +318,10 @@ public:
         return individuals.at(i).adjusted_fitness;
     }
     [[nodiscard]] I& individual(size_t i) {
-        return individuals.at(i).individual;
+        return *individuals.at(i).individual;
     }
     [[nodiscard]] const I& individual(size_t i) const {
-        return individuals.at(i).individual;
+        return *individuals.at(i).individual;
     }
 
     // Operators

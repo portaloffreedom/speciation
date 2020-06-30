@@ -10,16 +10,21 @@
 
 using namespace speciation;
 
-TEST_CASE( "Species compile and are not broken" "[species]" ) {
-    std::vector<Individual42> initial_population = {{41}};
-    Species<Individual42, float> species(initial_population, 423);
+TEST_CASE("Species compile and are not broken" "[species]")
+{
+    std::vector<std::unique_ptr<Individual42>> initial_population;
+    initial_population.emplace_back(std::make_unique<Individual42>(41));
+    Species<Individual42, float> species = Species<Individual42, float>(
+            initial_population.begin(), initial_population.end(),
+            423
+            );
 
-    Conf conf {
-        .young_age_threshold = 1,
-        .old_age_threshold = 3,
-        .species_max_stagnation = 100,
-        .young_age_fitness_boost = 1.1,
-        .old_age_fitness_penalty = 0.9,
+    Conf conf{
+            .young_age_threshold = 1,
+            .old_age_threshold = 3,
+            .species_max_stagnation = 100,
+            .young_age_fitness_boost = 1.1,
+            .old_age_fitness_penalty = 0.9,
     };
 
     REQUIRE(not species.empty());
@@ -39,10 +44,15 @@ TEST_CASE( "Species compile and are not broken" "[species]" ) {
     REQUIRE(species.best_fitness() == 42);
 }
 
-TEST_CASE( "Individuals with optional fitness" "[species]" ) {
-    Species<IndividualOptionalF, float> species({{41, 22}}, 423);
+TEST_CASE("Individuals with optional fitness" "[species]")
+{
+    std::unique_ptr<IndividualOptionalF> individual =
+            std::make_unique<IndividualOptionalF>(41, 22);
+    Species<IndividualOptionalF, float> species(
+            std::move(individual),
+            423);
 
-    Conf conf {
+    Conf conf{
             .young_age_threshold = 1,
             .old_age_threshold = 3,
             .species_max_stagnation = 100,
@@ -67,11 +77,14 @@ TEST_CASE( "Individuals with optional fitness" "[species]" ) {
     REQUIRE(species.best_fitness() == 22);
 }
 
-TEST_CASE( "Exception thrown with negative fitness" "[species]" ) {
+TEST_CASE("Exception thrown with negative fitness" "[species]")
+{
     //TODO support negative fitness in the fitness adjustment
-    Species<IndividualOptionalF, float> species({{451, -1}}, 423);
+    Species<IndividualOptionalF, float> species(
+            std::make_unique<IndividualOptionalF>(451, -1),
+            423);
 
-    Conf conf {
+    Conf conf{
             .young_age_threshold = 1,
             .old_age_threshold = 3,
             .species_max_stagnation = 100,
@@ -94,14 +107,17 @@ TEST_CASE( "Exception thrown with negative fitness" "[species]" ) {
     REQUIRE(species.best_fitness() != -1);
 }
 
-TEST_CASE( "Species iterator" "[species]" ) {
-    Species<IndividualOptionalF, float> species({
-        {41, 22},
-        { 42, 21.1},
-        { 43, 22.1},
-        }, 111);
+TEST_CASE("Species iterator" "[species]")
+{
+    std::vector<std::unique_ptr<IndividualOptionalF>> individuals;
+    individuals.emplace_back(std::make_unique<IndividualOptionalF>(41, 22));
+    individuals.emplace_back(std::make_unique<IndividualOptionalF>(42, 21.1));
+    individuals.emplace_back(std::make_unique<IndividualOptionalF>(43, 22.1));
+    Species<IndividualOptionalF, float> species(
+            individuals.begin(), individuals.end(),
+            111);
 
-    Conf conf {
+    Conf conf{
             .young_age_threshold = 1,
             .old_age_threshold = 3,
             .species_max_stagnation = 100,
@@ -125,7 +141,7 @@ TEST_CASE( "Species iterator" "[species]" ) {
     REQUIRE_FALSE(species.adjusted_fitness(1).has_value());
     REQUIRE_FALSE(species.adjusted_fitness(2).has_value());
 
-    for(const Species<IndividualOptionalF, float>::Indiv &indiv: species) {
+    for (const Species<IndividualOptionalF, float>::Indiv &indiv: species) {
         REQUIRE(not indiv.adjusted_fitness.has_value());
     }
 
@@ -143,9 +159,9 @@ TEST_CASE( "Species iterator" "[species]" ) {
     REQUIRE(species.adjusted_fitness(1).value() == Approx(7.73667f));
     REQUIRE(species.adjusted_fitness(2).value() == Approx(8.10333f));
 
-    for(Species<IndividualOptionalF, float>::Indiv &indiv: species) {
+    for (Species<IndividualOptionalF, float>::Indiv &indiv: species) {
         REQUIRE(indiv.adjusted_fitness > 0.);
-        (*indiv.individual._fitness) += 100.f;
+        (*indiv.individual->_fitness) += 100.f;
         REQUIRE(indiv.adjusted_fitness < 100.);
     }
 
@@ -154,7 +170,7 @@ TEST_CASE( "Species iterator" "[species]" ) {
     REQUIRE(species.best_fitness() == 122.1f);
 
     const Species<IndividualOptionalF, float> &const_species = species;
-    for(const Species<IndividualOptionalF, float>::Indiv &indiv: const_species) {
+    for (const Species<IndividualOptionalF, float>::Indiv &indiv: const_species) {
         REQUIRE(indiv.adjusted_fitness.has_value());
     }
 

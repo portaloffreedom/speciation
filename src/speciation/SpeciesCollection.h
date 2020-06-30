@@ -32,25 +32,46 @@ public:
         best = collection.end();
     }
 
-    SpeciesCollection(std::vector<Species<I,F>> collection)
-        : cache_need_updating(true)
-        , collection(std::move(collection))
+    SpeciesCollection(std::vector<Species<I,F>> &&collection)
+        : collection(std::move(collection))
+        , cache_need_updating(true)
     {
         best = collection.end();
     }
 
+    SpeciesCollection(SpeciesCollection &&other)
+        : collection(std::move(collection))
+        , best(std::move(other.best))
+        , cache_need_updating(other.cache_need_updating)
+    {
+        assert(this != &other);
+    }
+
+    /**
+     * Create a new species inline, directly inside the vector.
+     * @tparam _Args Constructor parameters
+     * @param __args constructor parameters
+     */
     template<typename... _Args>
-    void add_species(_Args&&... __args) {
-//        std::make_unique<>()
+    void create_species(_Args&&... __args) {
         collection.emplace_back(std::forward<_Args>(__args)...);
         cache_need_updating = true;
     }
 
-    void add_species(Species<I,F> &item) {
-        collection.emplace_back(item);
+    /**
+     * Moves a species inside the collection
+     * @param item rvalue species to move inside the collection
+     */
+    void add_species(Species<I,F> &&item) {
+        collection.emplace_back(std::move(item));
         cache_need_updating = true;
     }
 
+    /**
+     * Replaces the individuals of a species at index `species_index`.
+     * @param species_index index of which species to operate on.
+     * @param new_individuals new individuals of this species.
+     */
     void set_individuals(size_t species_index, std::vector<I> new_individuals) {
         collection[species_index].set_individuals(new_individuals);
         cache_need_updating = true;
@@ -59,20 +80,28 @@ public:
     /**
      * Removes all empty species (cleanup routing for every case..)
      */
-    void cleanup() {
-        collection.erase(std::remove_if(collection.begin(),
-                                        collection.end(),
-                                        [](const Species<I,F> &s) { return s.empty(); }),
-                         collection.end());
+    void cleanup()
+    {
+        collection.erase(
+                std::remove_if(collection.begin(),
+                               collection.end(),
+                               [](const Species<I, F> &s) {
+                                   return s.empty();
+                               }),
+                collection.end());
     }
 
-    void clear() {
+    /**
+     * Deletes all species.
+     */
+    void clear()
+    {
         collection.clear();
     }
 
     /**
      * Computes the adjusted fitness for all species
-     * @param conf
+     * @param conf Species configuration object
      */
     void adjust_fitness(const Conf &conf)
     {
@@ -158,6 +187,13 @@ public:
         return worst_species;
     }
 
+    /**
+     * Calculates the number of individuals inside all species
+     *
+     * WARNING! The value is not cached and is recalculated every time.
+     *
+     * @return the total number of individuals across all species.
+     */
     [[nodiscard]] size_t count_individuals() const
     {
         return std::accumulate(collection.begin(), collection.end(), 0,
@@ -167,6 +203,11 @@ public:
     }
 
 private:
+    /**
+     * Updates the cached values
+     *
+     * WARNING: Cannot cache Worst value, because it's value depends on other parameters (minimal size and others)
+     */
     void _update_cache() {
         assert(not collection.empty());
 
@@ -176,7 +217,7 @@ private:
                 collection.end(),
                 [](const Species<I,F> &a, const Species<I,F> &b)
             {
-                return a.get_best_individual()->individual.fitness() < b.get_best_individual()->individual.fitness();
+                return a.get_best_individual()->individual->fitness() < b.get_best_individual()->individual->fitness();
             }
         );
 
@@ -197,21 +238,45 @@ public:
     }
 
     // iterator
+    /**
+     *  Returns a read/write iterator that points to the first
+     *  species in the collection.
+     */
     typename std::vector<Species<I,F>>::iterator begin() {
         return collection.begin();
     }
 
+    /**
+     *  Returns a read/write iterator that points one past the last
+     *  species in the collection.
+     */
     typename std::vector<Species<I,F>>::iterator end() {
         return collection.end();
     }
 
     // const iterator
+    /**
+     *  Returns a read-only (constant) iterator that points to the
+     *  first species in the collection.
+     */
     typename std::vector<Species<I,F>>::const_iterator begin() const {
         return collection.cbegin();
     }
 
+    /**
+     *  Returns a read-only (constant) iterator that points one past
+     *  the last species in the collection.
+     */
     typename std::vector<Species<I,F>>::const_iterator end() const {
         return collection.cend();
+    }
+
+    /**
+     * The last inserted species.
+     * @return reference to the last inserted species.
+     */
+    Species<I,F>& back() {
+        return collection.back();
     }
 };
 

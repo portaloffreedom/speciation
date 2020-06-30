@@ -2,6 +2,7 @@
 // Created by matteo on 24/6/20.
 //
 
+#include <speciation/Selection.h>
 #include "catch2/catch.hpp"
 #include "speciation/Genus.h"
 #include "test_individuals.h"
@@ -17,24 +18,28 @@ TEST_CASE( "Instantiate a Genus" "[genus]")
 TEST_CASE( "Instantiate a Genus with species" "[genus]")
 {
     Genus<ChildIndividual,float> genus;
-    std::vector<ChildIndividual> initial_population = {
-            {0},
-            {1},
-            {2},
-            {3},
-            {4},
-            {5},
-            {6},
-            {7},
-            {8},
-            {9},
-    };
+    std::vector<std::unique_ptr<ChildIndividual>> initial_population;// = {
+    initial_population.reserve(10);
 
-    int id_counter = 10;
+    initial_population.emplace_back(std::make_unique<ChildIndividual>(0));
+    initial_population.emplace_back(std::make_unique<ChildIndividual>(1));
+    initial_population.emplace_back(std::make_unique<ChildIndividual>(2));
+    initial_population.emplace_back(std::make_unique<ChildIndividual>(3));
+    initial_population.emplace_back(std::make_unique<ChildIndividual>(4));
+    initial_population.emplace_back(std::make_unique<ChildIndividual>(5));
+    initial_population.emplace_back(std::make_unique<ChildIndividual>(6));
+    initial_population.emplace_back(std::make_unique<ChildIndividual>(7));
+    initial_population.emplace_back(std::make_unique<ChildIndividual>(8));
+    initial_population.emplace_back(std::make_unique<ChildIndividual>(9));
 
-    genus.speciate(initial_population.cbegin(), initial_population.cend());
+    int id_counter = static_cast<int>(initial_population.size());
+
+    genus.speciate(initial_population.begin(), initial_population.end());
+    REQUIRE(initial_population.size() == genus.count_individuals());
+
     const Conf conf {
-        10,
+        static_cast<unsigned int>(initial_population.size()),
+        true,
         2,
         10,
         20,
@@ -43,33 +48,41 @@ TEST_CASE( "Instantiate a Genus with species" "[genus]")
     };
 
     srand(1);
-
-    auto generate_new_individual = [&id_counter](auto begin, auto end) {
-        return ChildIndividual(id_counter++);
+    auto selection = [&id_counter](auto begin, auto end) {
+        return tournament_selection<float>(begin, end, 2);
+    };
+    auto parent_selection = [&id_counter](auto begin, auto end) {
+        return std::make_pair(begin,begin+1);
+    };
+    auto crossover_1 = [&id_counter](const ChildIndividual &parent) -> std::unique_ptr<ChildIndividual> {
+        return std::make_unique<ChildIndividual>(id_counter++);
+    };
+    auto crossover_2 = [&id_counter](const ChildIndividual &parent_a, const ChildIndividual &parent_b) -> std::unique_ptr<ChildIndividual> {
+        return std::make_unique<ChildIndividual>(id_counter++);
     };
     auto mutate = [](ChildIndividual &indiv) {
         /*mutate*/
     };
-    auto crossover = [&id_counter](const ChildIndividual &a, const ChildIndividual &b) {
-        return ChildIndividual(id_counter++);
+    // generational population manager
+    auto population_manager = [&id_counter](std::vector<std::unique_ptr<ChildIndividual>> &&new_pop,
+                                            const std::vector<const ChildIndividual*> &old_pop,
+                                            unsigned int pop_amount) -> std::vector<std::unique_ptr<ChildIndividual>> {
+        return std::vector<std::unique_ptr<ChildIndividual>>(std::move(new_pop));
     };
-    auto population_manager = [&id_counter](const std::vector<ChildIndividual> &new_pop,
-                                            const std::vector<ChildIndividual> &old_pop,
-                                            unsigned int pop_amount) {
-        return std::vector<ChildIndividual>(pop_amount);
-    };
-    auto evaluate = [](ChildIndividual &new_indiv) {
+    auto evaluate = [](ChildIndividual *new_indiv) {
         float fit = float(rand()) / float(RAND_MAX);
-        new_indiv.set_fitness(fit);
+        new_indiv->set_fitness(fit);
         return fit;
     };
 
     try {
         Genus genus1 = genus.next_generation(
                 conf,
-                generate_new_individual,
+                selection,
+                parent_selection,
+                crossover_1,
+                crossover_2,
                 mutate,
-                crossover,
                 population_manager,
                 evaluate
         );

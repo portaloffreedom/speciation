@@ -46,7 +46,9 @@ public:
      * Creates the species. It takes a list of individuals and splits them into multiple species,
      * grouping the compatible individuals together.
      *
-     * @tparam Iterator
+     * WARNING! THIS FUNCTION TAKES OWNERSHIP OF THE SOURCE ITERATOR FOR INDIVIDUALS
+     *
+     * @tparam Iterator non-const iterator of std::unique_ptr<I> individuals.
      * @param fist, last: the range of elements to sum
      */
     template< typename Iterator >
@@ -60,52 +62,61 @@ public:
         // NOTE: we are comparing the new generation's genomes to the representative from the previous generation!
         // Any new species that is created is assigned a representative from the new generation.
         for (; first != last; first++) {
-            const I& individual = *first;
+            std::unique_ptr<I> &individual = *first;
             // Iterate through each species and check if compatible. If compatible, then add the species.
             // If not compatible, create a new species.
             auto species_it = species_collection.begin();
             auto species_end = species_collection.end();
+            // Find compatible species
             for (; species_it != species_end; species_it++) {
                 Species<I,F> &species = *species_it;
-                if (species.is_compatible(individual)) {
+                if (species.is_compatible(*individual)) {
                     species.insert(std::move(individual));
+                    break;
                 }
             }
             // No compatible species was found
             if (species_it == species_end) {
-                species_collection.add_species(Species<I,F>(individual, next_species_id));
+                species_collection.create_species(std::move(individual), next_species_id);
                 next_species_id++;
             }
         }
     }
 
-    /**
-     * Creates the genus for the next generation.
-     * The species are copied over so that `this` Genus is not invalidated.
-     *
-     * @param conf
-     * @param mutate_individual function that mutates an individual
-     * @param crossover_individual function to crossover and create new individuals
-     * @param population_management function to create the new population from the old and new individual,
-     * size of the new population is passed in as a parameter. The size can vary a lot from one generation to the next.
-     * @param evaluate_individual function to evaluate new individuals
-     * @return the genus of the next generation
-     */
+     /**
+      * Creates the genus for the next generation.
+      * The species are copied over so that `this` Genus is not invalidated.
+      *
+      * @param conf Species configuration object
+      * @param selection function to select 1 parent (can be called even if crossover is enabled, when there is not more
+      * than one parent possible)
+      * @param parent_selection function to select 2 parents (only possibly called if crossover is enabled)
+      * @param reproduce_individual_1 function to crossover and create new individuals from 1 parent
+      * @param crossover_individual_2 function to crossover and create new individuals from 2 parents
+      * @param mutate_individual function that mutates an individual
+      * @param population_management function to create the new population from the old and new individual,
+      * size of the new population is passed in as a parameter. The size can vary a lot from one generation to the next.
+      * @param evaluate_individual function to evaluate new individuals
+      * @return the genus of the next generation
+      */
     Genus next_generation(
             const Conf &conf,
-            const std::function<I(typename Species<I,F>::const_iterator, typename Species<I,F>::const_iterator)> &generate_new_individual,
+            const std::function<typename Species<I,F>::const_iterator (typename Species<I,F>::const_iterator, typename Species<I,F>::const_iterator)> &selection,
+            const std::function<std::pair<typename Species<I,F>::const_iterator,typename Species<I,F>::const_iterator>(typename Species<I,F>::const_iterator, typename Species<I,F>::const_iterator)> &parent_selection,
+            const std::function<std::unique_ptr<I>(const I&)> &reproduce_individual_1,
+            const std::function<std::unique_ptr<I>(const I&, const I&)> &crossover_individual_2,
             const std::function<void(I&)> &mutate_individual,
-            const std::function<I(const I&, const I&)> &crossover_individual,
-            const std::function<std::vector<I>(const std::vector<I>&, const std::vector<I>&, unsigned int)> &population_management,
-            const std::function<F(I&)> &evaluate_individual)
+            const std::function<std::vector<std::unique_ptr<I>>(std::vector<std::unique_ptr<I>> &&new_individuals, const std::vector<const I*>&old_individuals, unsigned int target_population)> &population_management,
+            const std::function<F(I*)> &evaluate_individual)
     {
         for (Species<I, F> &species: species_collection) {
             for (typename Species<I, F>::Indiv &i : species) {
-                std::optional<F> ready_fitness = i.individual.fitness();
+                std::optional<F> ready_fitness = i.individual->fitness();
                 if (not ready_fitness.has_value()) {
-                    F fitness = evaluate_individual(i.individual);
-                    assert(i.individual.fitness().has_value());
-                    assert(fitness == i.individual.fitness().value());
+                    F fitness = evaluate_individual(i.individual.get());
+                    std::optional<F> individual_fitness = i.individual->fitness();
+                    assert(individual_fitness.has_value());
+                    assert(fitness == individual_fitness.value());
                 }
             }
         }
@@ -121,9 +132,13 @@ public:
 
         // Clone Species
         SpeciesCollection<I, F> new_species_collection;
-        std::vector<std::reference_wrapper<I>> need_evaluation;
-        std::vector<I> orphans;
-        std::vector<std::vector<I>> old_species_individuals;
+        std::vector<std::unique_ptr<I>> orphans;
+
+        // Pointers to values in new_species_collection and orphans
+        std::vector<I*> need_evaluation;
+
+        // Pointers to current const species_collection
+        std::vector<std::vector<const I*>> old_species_individuals;
 
         //////////////////////////////////////////////
         /// GENERATE NEW INDIVIDUALS
@@ -135,24 +150,34 @@ public:
             std::transform(species.cbegin(), species.cend(),
                     old_species_individuals.back().begin(),
                     [](const typename Species<I,F>::Indiv &i)
-                    { return i.individual; });
+                    { return i.individual.get(); });
 
-            std::vector<I> new_individuals;
+            std::vector<std::unique_ptr<I>> new_individuals;
 
             for (unsigned int n_offspring = 0; n_offspring < offspring_amounts[species_i]; n_offspring++) {
-                I new_individual = generate_new_individual(species.cbegin(), species.cend());
+                std::unique_ptr<I> new_individual = _generate_new_individual(
+                        conf,
+                        species.cbegin(), species.cend(),
+                        selection,
+                        parent_selection,
+                        reproduce_individual_1,
+                        crossover_individual_2,
+                        mutate_individual
+                );
 
                 // if the new individual is compatible with the species, otherwise create new.
-                if (species.is_compatible(new_individual)) {
+                if (species.is_compatible(*new_individual)) {
                     new_individuals.emplace_back(std::move(new_individual));
-                    need_evaluation.emplace_back(new_individuals.back());
+                    need_evaluation.emplace_back(new_individuals.back().get());
                 } else {
                     orphans.emplace_back(std::move(new_individual));
-                    need_evaluation.emplace_back(orphans.back());
+                    need_evaluation.emplace_back(orphans.back().get());
                 }
             }
 
-            new_species_collection.add_species(species.clone_with_new_individuals(std::move(new_individuals)));
+            new_species_collection.add_species(
+                    species.clone_with_new_individuals(std::move(new_individuals))
+                    );
 
             species_i++;
         }
@@ -160,32 +185,32 @@ public:
         //////////////////////////////////////////////
         /// EVALUATE NEW INDIVIDUALS
         // TODO add here recovered individuals [partial recovery]
-        for (I &new_individual : need_evaluation) {
+        for (I *new_individual : need_evaluation) {
             F fitness = evaluate_individual(new_individual);
-            bool has_value = new_individual.fitness().has_value();
-            assert(has_value);
-            assert(fitness == new_individual.fitness().value());
+            std::optional<F> individual_fitness = new_individual->fitness();
+            assert(individual_fitness.has_value());
+            assert(fitness == individual_fitness.value());
         }
 
         //////////////////////////////////////////////
         /// MANAGE ORPHANS, POSSIBLY CREATE NEW SPECIES
         /// recheck if other species can adopt the orphans individuals.
         std::forward_list<std::reference_wrapper<Species<I, F>>> list_of_new_species;
-        for (I &orphan : orphans) {
+        for (std::unique_ptr<I> &orphan : orphans) {
             bool compatible_species_found = false;
             for (Species<I, F> &species : new_species_collection) {
-                if (species.is_compatible(orphan)) {
-                    species.insert(orphan);
+                if (species.is_compatible(*orphan)) {
+                    species.insert(std::move(orphan));
                     compatible_species_found = true;
                     break;
                 }
             }
             if (not compatible_species_found) {
-                Species<I, F> new_species = Species<I, F>({orphan}, next_species_id);
+                Species<I, F> new_species = Species<I, F>(std::move(orphan), next_species_id);
                 next_species_id++;
-                new_species_collection.add_species(new_species);
+                new_species_collection.add_species(std::move(new_species));
                 // add an entry for new species which does not have a previous iteration.
-                list_of_new_species.emplace_front(new_species);
+                list_of_new_species.emplace_front(new_species_collection.back());
             }
         }
 
@@ -207,19 +232,19 @@ public:
                 break;
             }
 
-            std::vector<I> new_species_individuals(new_species.size());
+            std::vector<std::unique_ptr<I>> new_species_individuals(new_species.size());
+            // this empties the new_species list
             std::transform(new_species.begin(), new_species.end(),
                            new_species_individuals.begin(),
-                           [](const typename Species<I, F>::Indiv &i)
-                           { return i.individual; });
+                           [](typename Species<I, F>::Indiv &i) { return std::move(i.individual); });
 
             // Create next population
-            std::vector<I> new_individuals
-                    = population_management(new_species_individuals,
+            std::vector<std::unique_ptr<I>> new_individuals
+                    = population_management(std::move(new_species_individuals),
                                             old_species_individuals[species_i],
                                             offspring_amounts[species_i]);
 
-            new_species.set_individuals(new_individuals);
+            new_species.set_individuals(std::move(new_individuals));
 
             species_i++;
         }
@@ -251,9 +276,59 @@ public:
 
         //////////////////////////////////////////////
         /// CREATE THE NEXT GENUS
-        return Genus(new_species_collection, this->next_species_id);
+        return Genus(std::move(new_species_collection), this->next_species_id);
     }
 private:
+    /**
+     * Generate a new individual from randomly selected parents + mutation
+     *
+     * @tparam Iter species population iterator (of Species::Indiv)
+     * @param conf Species configuration object
+     * @param population_begin start of the species population
+     * @param pop_end end of the species population
+     * @param selection function to select 1 parent (can be called even if crossover is enabled, when there is not more
+      * than one parent possible)
+     * @param parent_selection function to select 2 parents (only possibly called if crossover is enabled)
+     * @param reproduce_1 function to crossover and create new individuals from 1 parent
+     * @param reproduce_2 function to crossover and create new individuals from 2 parents
+     * @param mutate function that mutates an individual
+     * @return the genus of the next generation
+     */
+    template<typename Iter>
+    std::unique_ptr<I> _generate_new_individual(
+            const Conf &conf,
+            Iter population_begin, Iter pop_end,
+            const std::function<Iter(Iter, Iter)> &selection,
+            const std::function<std::pair<Iter,Iter>(Iter, Iter)> &parent_selection,
+            const std::function<std::unique_ptr<I>(const I&)> &reproduce_1,
+            const std::function<std::unique_ptr<I>(const I&, const I&)> &reproduce_2,
+            const std::function<void(I&)> &mutate
+    ) const
+    {
+        size_t parent_pool_size = std::distance(population_begin, pop_end);
+        assert(parent_pool_size > 0);
+
+        // Crossover
+        std::unique_ptr<I> child;
+        if (conf.crossover and parent_pool_size > 1)
+        {
+            std::pair<Iter,Iter> parents = parent_selection(population_begin, pop_end);
+            const I &parent1 = (*parents.first->individual);
+            const I &parent2 = (*parents.second->individual);
+            child = reproduce_2(parent1, parent2);
+        }
+        else
+        {
+            Iter parent_iter = selection(population_begin, pop_end);
+            const I &parent = (*parent_iter->individual);
+            child = reproduce_1(parent);
+        }
+
+        mutate(*child);
+
+        return std::move(child);
+    }
+
     /**
      * Calculates the number of offsprings allocated for each individual.
      * The total of allocated individuals will be `number_of_individuals`
@@ -293,7 +368,7 @@ private:
 
     /**
      * Calculates the Average fitness of the population based on the adjusted fitnesses
-     * @return
+     * @return the average fitness
      */
     [[nodiscard]] F _calculate_average_fitness() const
     {
@@ -316,6 +391,15 @@ private:
         return total_adjusted_fitness;
     }
 
+    /**
+     * Calculates the number of offsprings allocated for each individual given the `average_adjusted_fitness`.
+     * The function is rounding real numbers to integer numbers, so the returned vector quite possibly will not sum up
+     * to the total population size.
+     *
+     * @param average_adjusted_fitness The average adjusted fitness across all the species.
+     * @return a vector of integers representing the number of allocated individuals for each species.
+     * The index of this list corresponds to the same index in `this->_species_list`.
+     */
     [[nodiscard]] std::vector<unsigned int> _calculate_population_size(F average_adjusted_fitness) const
     {
         std::vector<unsigned int> species_offspring_amount;
@@ -332,6 +416,18 @@ private:
         return species_offspring_amount;
     }
 
+    /**
+     * `species_offspring_amount` could be incorrect because of approximation errors when we round floats to integers.
+     *
+     * This method modifies the `species_offspring_amount` so that the sum of the vector is equal to the total population size.
+     * It adds (or removes if negative) the `missing_offspring` number of individuals in the vector.
+     * When adding, it chooses the best species.
+     * When removing, it chooses the worst species, multiple species if one species is not big enough.
+     *
+     * @param species_offspring_amount vector of offspring_amounts that needs correction
+     * @param missing_offspring amount of correction to be done. Positive means we need more offsprings, negative means
+     * we have to much.
+     */
     void _correct_population_size(
             std::vector<unsigned int> &species_offspring_amount,
             const int missing_offspring)
@@ -377,8 +473,24 @@ private:
 
 public:
     // Relay methods
+    /**
+     * Number of species
+     * @return the number of species
+     */
     [[nodiscard]] size_t size() const {
         return species_collection.size();
+    }
+
+    /**
+     * Calculates the total number of individuals.
+     * This should be equal to the population size.
+     *
+     * WARNING! Value is not cached and calculated every time.
+     *
+     * @return the total number of individuals
+     */
+    [[nodiscard]] size_t count_individuals() const {
+        return species_collection.count_individuals();
     }
 
     //TODO iter_individuals

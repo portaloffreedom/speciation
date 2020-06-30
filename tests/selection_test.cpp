@@ -8,78 +8,119 @@
 #include "speciation/Selection.h"
 #include "test_individuals.h"
 
-using namespace speciation;
-
 TEST_CASE("Tournament selection" "[selection]")
 {
-    std::vector<IndividualF> population = {{1, 1},
-                                           {2, 2},
-                                           {3, 3}};
+    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
 
-    std::vector<IndividualF>::iterator candidate
-            = speciation::tournament_selection<float>(population.begin(), population.end());
+    std::vector<std::unique_ptr<IndividualF>> population;
+    population.emplace_back(std::make_unique<IndividualF>(1, 1));
+    population.emplace_back(std::make_unique<IndividualF>(2, 2));
+    population.emplace_back(std::make_unique<IndividualF>(3, 3));
+
+
+    Iter candidate
+            = speciation::tournament_selection<float, Iter, speciation::standard_fitness>(population.begin(), population.end());
     REQUIRE(std::find(population.begin(), population.end(), *candidate) != population.end());
 
-    std::vector<IndividualF>::const_iterator const_candidate
-            = speciation::tournament_selection<float>(population.begin(), population.end());
+    CIter const_candidate
+            = speciation::tournament_selection<float, CIter, speciation::standard_fitness>(population.begin(), population.end());
     REQUIRE(std::find(population.begin(), population.end(), *const_candidate) != population.end());
 
-    IndividualF candidate_copy
-            = *speciation::tournament_selection<float>(population.begin(), population.end());
+//    std::unique_ptr<IndividualF> candidate_copy
+//            = speciation::tournament_selection<float>(population.begin(), population.end());
 }
 
-std::optional<float> fitness_ref_wrapper(std::vector<std::reference_wrapper<NonCopiableIndividual>>::iterator &it)
+TEST_CASE("Tournament selection points to the original source" "[selection]")
 {
-    return it->get().fitness();
+    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
+
+    std::vector<std::unique_ptr<IndividualF>> population;
+    population.emplace_back(std::make_unique<IndividualF>(1, 1));
+    population.emplace_back(std::make_unique<IndividualF>(2, 2));
+    population.emplace_back(std::make_unique<IndividualF>(3, 3));
+
+    Iter candidate
+            = speciation::tournament_selection<float, Iter, speciation::standard_fitness>(population.begin(), population.end());
+    REQUIRE(std::find(population.begin(), population.end(), *candidate) != population.end());
+
+    std::unique_ptr<IndividualF> moved_individual = std::move(*candidate);
+    REQUIRE(moved_individual != nullptr);
+    REQUIRE(std::count(population.begin(), population.end(), nullptr) == 1);
+}
+
+std::optional<float>
+fitness_ref_wrapper(std::vector<std::reference_wrapper<std::unique_ptr<NonCopiableIndividual>>>::iterator &it)
+{
+    return it->get()->fitness();
 }
 
 TEST_CASE("Tournament selection with a non copiable individual" "[selection]")
 {
-    //std::vector requires its inside elements to be copiable
-    std::forward_list<NonCopiableIndividual> population;
-    population.emplace_front(1, 1.);
-    population.emplace_front(2, 2.);
-    population.emplace_front(3, 3.);
+    typedef std::forward_list<std::unique_ptr<NonCopiableIndividual>>::iterator Iter;
+    typedef std::forward_list<std::unique_ptr<NonCopiableIndividual>>::const_iterator CIter;
 
-    std::forward_list<NonCopiableIndividual>::iterator candidate
-            = speciation::tournament_selection<float>(population.begin(), population.end());
+    //std::vector requires its inside elements to be copiable
+    std::forward_list<std::unique_ptr<NonCopiableIndividual>> population;
+    population.emplace_front(std::make_unique<NonCopiableIndividual>(1, 1.));
+    population.emplace_front(std::make_unique<NonCopiableIndividual>(2, 2.));
+    population.emplace_front(std::make_unique<NonCopiableIndividual>(3, 3.));
+
+    Iter candidate
+            = speciation::tournament_selection<float, Iter, speciation::standard_fitness>(population.begin(), population.end());
     REQUIRE(std::find(population.begin(), population.end(), *candidate) != population.end());
 
-    std::forward_list<NonCopiableIndividual>::const_iterator const_candidate
-            = speciation::tournament_selection<float>(population.begin(), population.end());
+    CIter const_candidate
+            = speciation::tournament_selection<float, CIter, speciation::standard_fitness>(population.begin(), population.end());
     REQUIRE(std::find(population.begin(), population.end(), *const_candidate) != population.end());
 
-    std::vector<std::reference_wrapper<NonCopiableIndividual>> population_vec;
-    for (NonCopiableIndividual &indiv : population) {
+    std::vector<std::reference_wrapper<std::unique_ptr<NonCopiableIndividual>>> population_vec;
+    for (std::unique_ptr<NonCopiableIndividual> &indiv : population) {
         population_vec.emplace_back(indiv);
     }
 
-    std::vector<std::reference_wrapper<NonCopiableIndividual>>::iterator candidate_vec
-            = speciation::tournament_selection<float, std::vector<std::reference_wrapper<NonCopiableIndividual>>::iterator, fitness_ref_wrapper>
+    std::vector<std::reference_wrapper<std::unique_ptr<NonCopiableIndividual>>>::iterator candidate_vec
+            = speciation::tournament_selection
+                    <
+                            float,
+                            typename std::vector<std::reference_wrapper<std::unique_ptr<NonCopiableIndividual>>>::iterator,
+                            fitness_ref_wrapper
+                    >
                     (population_vec.begin(), population_vec.end());
-    REQUIRE(std::find(population.begin(), population.end(), *candidate_vec) != population.end());
+    REQUIRE(std::find(population.begin(), population.end(), (*candidate_vec).get()) != population.end());
 }
 
 TEST_CASE("Tournament selection exception on empty set" "[selection]")
 {
-    std::vector<IndividualF> population = {};
+    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
+
+    constexpr auto tournament = &speciation::tournament_selection<float, Iter, speciation::standard_fitness>;
+
+    std::vector<std::unique_ptr<IndividualF>> population = {};
     REQUIRE_THROWS_AS(
-            speciation::tournament_selection<float>(population.begin(), population.end()),
+            tournament(population.begin(), population.end(), 2),
             std::invalid_argument
     );
 }
 
 TEST_CASE("Tournament selection should be able to all elements" "[selection]")
 {
-    std::vector<IndividualF> population = {{1, 1},
-                                           {2, 2},
-                                           {3, 3}};
+    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
+
+    std::vector<std::unique_ptr<IndividualF>> population;
+    population.emplace_back(std::make_unique<IndividualF>(1, 1));
+    population.emplace_back(std::make_unique<IndividualF>(2, 2));
+    population.emplace_back(std::make_unique<IndividualF>(3, 3));
+
     std::set<unsigned int> found;
     int i;
     for (i = 0; i < 100; i++) {
-        IndividualF candidate
-                = *speciation::tournament_selection<float>(population.begin(), population.end());
-        found.insert(candidate.id);
+        std::unique_ptr<IndividualF> &candidate
+                = *speciation::tournament_selection<float, Iter, speciation::standard_fitness>(population.begin(), population.end());
+        found.insert(candidate->id);
         if (found.size() == population.size())
             break;
     }
@@ -92,94 +133,104 @@ TEST_CASE("Tournament selection should be able to all elements" "[selection]")
 
 TEST_CASE("Multiple selection with duplicates" "[selection]")
 {
-    std::vector<IndividualF> source = {{1, 1},
-                                       {2, 2},
-                                       {3, 3}};
-    std::vector<IndividualF> destination = {{},{},{},{}};
+    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
+
+    std::vector<std::unique_ptr<IndividualF>> source;
+    source.emplace_back(std::make_unique<IndividualF>(1, 1));
+    source.emplace_back(std::make_unique<IndividualF>(2, 2));
+    source.emplace_back(std::make_unique<IndividualF>(3, 3));
+
+    std::vector<std::unique_ptr<IndividualF>> destination(4);
 
     // This is mostly a compilation test on how templates are working
 
-    multiple_selection_with_duplicates<typename std::vector<IndividualF>::const_iterator, typename std::vector<IndividualF>::iterator>(
+    speciation::multiple_selection_with_duplicates<CIter, Iter>(
             source.cbegin(), source.cend(),
             destination.begin(), destination.end(),
-            [](auto begin,
-               auto end) {
-                return speciation::tournament_selection<float>(begin, end, 3);
+            [](CIter begin,
+               CIter end) {
+                return speciation::tournament_selection<float, CIter, speciation::standard_fitness>(begin, end, 3);
             }
     );
 
-    multiple_selection_with_duplicates<typename std::vector<IndividualF>::iterator>(
+    speciation::multiple_selection_with_duplicates<Iter>(
             source.begin(), source.end(),
             destination.begin(), destination.end(),
-            [](auto begin,
-               auto end) {
-                return speciation::tournament_selection<float>(begin, end, 3);
+            [](Iter begin,
+               Iter end) {
+                return speciation::tournament_selection<float, Iter, speciation::standard_fitness>(begin, end, 3);
             }
     );
 
-    multiple_selection_with_duplicates(
+    speciation::multiple_selection_with_duplicates(
             source.begin(), source.end(),
             destination.begin(), destination.end(),
-            [](std::vector<IndividualF>::iterator begin,
-               std::vector<IndividualF>::iterator end) {
-                return speciation::tournament_selection<float>(begin, end, 3);
+            [](std::vector<std::unique_ptr<IndividualF>>::iterator begin,
+               std::vector<std::unique_ptr<IndividualF>>::iterator end) {
+                return speciation::tournament_selection<float, CIter, speciation::standard_fitness>(begin, end, 3);
             }
     );
 
-    multiple_selection_with_duplicates(
+    speciation::multiple_selection_with_duplicates(
             source.begin(), source.end(),
             destination.begin(), destination.end(),
             [](auto begin, auto end) {
-                return speciation::tournament_selection<float>(begin, end, 3);
+                return speciation::tournament_selection<float, CIter, speciation::standard_fitness>(begin, end, 3);
             }
     );
 }
 
 TEST_CASE("Multiple selection with no duplicates" "[selection]")
 {
-    std::vector<IndividualF> source = {{1, 1},
-                                       {2, 2},
-                                       {3, 3}};
-    std::vector<IndividualF> destination = {{},{},{}};
+    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
+
+    std::vector<std::unique_ptr<IndividualF>> source;
+    source.emplace_back(std::make_unique<IndividualF>(1, 1));
+    source.emplace_back(std::make_unique<IndividualF>(2, 2));
+    source.emplace_back(std::make_unique<IndividualF>(3, 3));
+
+    std::vector<std::unique_ptr<IndividualF>> destination(3);
 
     // This is mostly a compilation test on how templates are working
 
     REQUIRE_NOTHROW(
-            multiple_selection_no_duplicates<typename std::vector<IndividualF>::const_iterator, typename std::vector<IndividualF>::iterator>(
+            speciation::multiple_selection_no_duplicates<CIter, Iter>(
                     source.cbegin(), source.cend(),
                     destination.begin(), destination.end(),
                     [](auto begin,
                        auto end) {
-                        return speciation::tournament_selection<float>(begin, end, 3);
+                        return speciation::tournament_selection<float, CIter, speciation::standard_fitness>(begin, end, 3);
                     }
             ));
 
     REQUIRE_NOTHROW(
-            multiple_selection_no_duplicates<typename std::vector<IndividualF>::iterator>(
+            speciation::multiple_selection_no_duplicates<Iter>(
                     source.begin(), source.end(),
                     destination.begin(), destination.end(),
                     [](auto begin,
                        auto end) {
-                        return speciation::tournament_selection<float>(begin, end, 3);
+                        return speciation::tournament_selection<float, Iter, speciation::standard_fitness>(begin, end, 3);
                     }
             ));
 
     REQUIRE_NOTHROW(
-            multiple_selection_no_duplicates(
+            speciation::multiple_selection_no_duplicates(
                     source.begin(), source.end(),
                     destination.begin(), destination.end(),
-                    [](std::vector<IndividualF>::iterator begin,
-                       std::vector<IndividualF>::iterator end) {
-                        return speciation::tournament_selection<float>(begin, end, 3);
+                    [](Iter begin,
+                       Iter end) {
+                        return speciation::tournament_selection<float, Iter, speciation::standard_fitness>(begin, end, 3);
                     }
             ));
 
     REQUIRE_NOTHROW(
-            multiple_selection_no_duplicates(
+            speciation::multiple_selection_no_duplicates(
                     source.begin(), source.end(),
                     destination.begin(), destination.end(),
                     [](auto begin, auto end) {
-                        return speciation::tournament_selection<float>(begin, end, 3);
+                        return speciation::tournament_selection<float, Iter, speciation::standard_fitness>(begin, end, 3);
                     }
             ));
 
@@ -187,16 +238,21 @@ TEST_CASE("Multiple selection with no duplicates" "[selection]")
 
 TEST_CASE("Multiple selection with no duplicates should throw an exception when destination is too big" "[selection]")
 {
-    std::vector<IndividualF> source = {{1, 1},
-                                       {2, 2},
-                                       {3, 3}};
-    std::vector<IndividualF> destination(4);
+    typedef std::vector<std::unique_ptr<IndividualF>>::iterator Iter;
+    typedef std::vector<std::unique_ptr<IndividualF>>::const_iterator CIter;
+
+    std::vector<std::unique_ptr<IndividualF>> source;
+    source.emplace_back(std::make_unique<IndividualF>(1, 1));
+    source.emplace_back(std::make_unique<IndividualF>(2, 2));
+    source.emplace_back(std::make_unique<IndividualF>(3, 3));
+
+    std::vector<std::unique_ptr<IndividualF>> destination(4);
     REQUIRE_THROWS_AS(
-            multiple_selection_no_duplicates(
+            speciation::multiple_selection_no_duplicates(
                     source.begin(), source.end(),
                     destination.begin(), destination.end(),
                     [](auto begin, auto end) {
-                        return speciation::tournament_selection<float>(begin, end, 3);
+                        return speciation::tournament_selection<float, Iter, speciation::standard_fitness>(begin, end, 3);
                     }
             ), std::invalid_argument);
 }

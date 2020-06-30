@@ -17,7 +17,13 @@ namespace speciation {
 template<typename F, typename Iter>
 inline std::optional<F> standard_fitness(Iter& indiv)
 {
-    return indiv->fitness();
+    return (*indiv)->fitness();
+}
+
+template<typename F, typename Iter>
+inline std::optional<F> indiv_fitness(Iter& indiv)
+{
+    return (*indiv).individual->fitness();
 }
 
 /**
@@ -29,7 +35,7 @@ inline std::optional<F> standard_fitness(Iter& indiv)
  * @param k amount of individuals to participate in the tournament
  * @return tournament selected element, iterator of it
  */
-template<typename F, typename Iter, typename std::optional<F> Fitness(Iter&) = standard_fitness<F, Iter> >
+template<typename F, typename Iter, typename std::optional<F> Fitness(Iter&) = indiv_fitness<F, Iter> >
 Iter tournament_selection(const Iter begin, const Iter end, unsigned int k = 2)
 {
     Iter best = end;
@@ -86,7 +92,7 @@ void multiple_selection_no_duplicates(
         IterSrc candidate = selection_function(population_begin, population_end);
 
         if (already_selected.count(candidate) == 0) {
-            (*dest_it) = *candidate;
+            *(*dest_it) = (*candidate)->clone();
             already_selected.insert(candidate);
             dest_it++;
         }
@@ -115,7 +121,7 @@ void multiple_selection_with_duplicates(
         Selection selection_function)
 {
     for (IterDest dest_it = destination_begin; dest_it != destination_end; dest_it++) {
-        (*dest_it) = *selection_function(population_begin, population_end);
+        *(*dest_it) = (*selection_function(population_begin, population_end))->clone();
     }
 }
 
