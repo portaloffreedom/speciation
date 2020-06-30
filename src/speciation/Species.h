@@ -271,7 +271,7 @@ private:
 
         // Extreme penalty if this species is stagnating for too long time
         // one exception if this is the best species found so far
-        if (not is_best_species and age.no_improvements() > conf.species_max_stagnation) {
+        if (not is_best_species && age.no_improvements() > conf.species_max_stagnation) {
             fitness *= 0.0000001;
         }
 

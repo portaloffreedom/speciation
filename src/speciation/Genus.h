@@ -331,7 +331,7 @@ private:
 
         // Crossover
         std::unique_ptr<I> child;
-        if (conf.crossover and parent_pool_size > 1)
+        if (conf.crossover && parent_pool_size > 1)
         {
             std::pair<Iter,Iter> parents = parent_selection(population_begin, pop_end);
             const I &parent1 = (*parents.first->individual);

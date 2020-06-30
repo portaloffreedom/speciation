@@ -25,7 +25,7 @@ struct IndividualF {
         return IndividualF(id,_fitness);
     }
     bool operator==(const IndividualF &b) const {
-        return id == b.id and _fitness == b._fitness;
+        return id == b.id && _fitness == b._fitness;
     }
     IndividualF& operator=(const IndividualF &other) {
         return *this;
@@ -80,7 +80,7 @@ public:
     }
 
     bool operator==(const ChildIndividual &b) const {
-        return id == b.id and _fitness == b._fitness;
+        return id == b.id && _fitness == b._fitness;
     }
 
     [[nodiscard]] std::optional<float> fitness() const override

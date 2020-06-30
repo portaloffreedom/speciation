@@ -53,8 +53,8 @@ public:
     bool operator== (const Age &other) const
     {
         return _generations == other._generations
-               and _evaluations == other._evaluations
-               and _no_improvements == other._no_improvements;
+               && _evaluations == other._evaluations
+               && _no_improvements == other._no_improvements;
     }
 
     bool operator!= (const Age &other) const
