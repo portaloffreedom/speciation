@@ -1,0 +1,34 @@
+name: C++ cmake CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  linux:
+    name: Test ${{ matrix.build_type }} mode on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: download catch2
+      run: git clone https://github.com/catchorg/Catch2.git
+      working-directory: /tmp
+    - name: configure catch2
+      run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCATCH_BUILD_TESTING=OFF
+      working-directory: /tmp/Catch2
+    - name: compile and install catch2
+      run: sudo make install
+      working-directory: /tmp/Catch2/build
+    - name: cmake ${{ matrix.build_type }}
+      run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+    - name: make
+      run: cd build && make
+    - name: test
+      run: ./build/tests/species_test
