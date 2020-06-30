@@ -23,9 +23,9 @@ public:
     {}
 
     // Getters
-    unsigned int generations() const { return _generations; }
-    unsigned int evaluations() const { return _evaluations; }
-    unsigned int no_improvements() const { return _no_improvements; }
+    [[nodiscard]] unsigned int generations() const { return _generations; }
+    [[nodiscard]] unsigned int evaluations() const { return _evaluations; }
+    [[nodiscard]] unsigned int no_improvements() const { return _no_improvements; }
 
     // Increasers
     void increase_generations() { _generations++; }

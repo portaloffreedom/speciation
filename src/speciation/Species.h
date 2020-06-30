@@ -262,11 +262,11 @@ private:
         unsigned int number_of_generations = age.generations();
         // boost the fitness up to some young age
         if (number_of_generations < conf.young_age_threshold) {
-            fitness *= conf.young_age_fitness_boost;
+            fitness *= static_cast<F>(conf.young_age_fitness_boost);
         }
         // penalty for old species
         if (number_of_generations > conf.old_age_threshold) {
-            fitness *= conf.old_age_fitness_penalty;
+            fitness *= static_cast<F>(conf.old_age_fitness_penalty);
         }
 
         // Extreme penalty if this species is stagnating for too long time

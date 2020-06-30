@@ -236,7 +236,7 @@ public:
         }
 
         // Do a recount on the number of offspring per species
-        size_t new_population_size = 0; //TODO list_of_new_species.count_individuals();
+        unsigned int new_population_size = 0; //TODO list_of_new_species.count_individuals();
         offspring_amounts = _count_offsprings(conf.total_population_size - new_population_size);
         // If this assert fails, the next population size is going to be different
         assert(std::accumulate(offspring_amounts.begin(), offspring_amounts.end(), 0u) ==

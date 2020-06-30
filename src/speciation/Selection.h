@@ -44,7 +44,7 @@ Iter tournament_selection(const Iter begin, const Iter end, RandomGenerator &g, 
     assert(k > 0);
     for (int i = 0; i < k; i++) {
         Iter candidate = select_randomly(begin, end, g);
-        if (best == end or Fitness(candidate) > Fitness(best)) {
+        if (best == end || Fitness(candidate) > Fitness(best)) {
             best = candidate;
         }
     }

@@ -184,7 +184,7 @@ public:
         typename std::vector<Species<I,F> >::iterator worst_species = collection.end();
 
         for (typename std::vector<Species<I,F> >::iterator species = collection.begin(); species != collection.end(); species++) {
-            if (exclude_id_list.has_value() and exclude_id_list.value().count(species->id()) > 0 )
+            if (exclude_id_list.has_value() && exclude_id_list.value().count(species->id()) > 0 )
             {
                 continue;
             }
