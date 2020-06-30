@@ -39,7 +39,8 @@ jobs:
     - name: test
       run: |
         echo $PWD
-        ls
+        ls -la
+        tree
         ./species_test
       working-directory: build/tests
       shell: bash
