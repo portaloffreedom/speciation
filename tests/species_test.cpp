@@ -19,13 +19,14 @@ TEST_CASE("Species compile and are not broken" "[species]")
             423
             );
 
-    Conf conf{
-            .young_age_threshold = 1,
-            .old_age_threshold = 3,
-            .species_max_stagnation = 100,
-            .young_age_fitness_boost = 1.1,
-            .old_age_fitness_penalty = 0.9,
-    };
+    Conf conf{};
+    conf.total_population_size = 1;
+    conf.crossover= false;
+    conf.young_age_fitness_boost = 1;
+    conf.old_age_threshold = 3;
+    conf.species_max_stagnation = 100;
+    conf.young_age_fitness_boost = 1.1;
+    conf.old_age_fitness_penalty = 0.9;
 
     REQUIRE(not species.empty());
     REQUIRE(species.size() == 1);
@@ -52,13 +53,14 @@ TEST_CASE("Individuals with optional fitness" "[species]")
             std::move(individual),
             423);
 
-    Conf conf{
-            .young_age_threshold = 1,
-            .old_age_threshold = 3,
-            .species_max_stagnation = 100,
-            .young_age_fitness_boost = 1.1,
-            .old_age_fitness_penalty = 0.9,
-    };
+    Conf conf{};
+    conf.total_population_size = 1;
+    conf.crossover= false;
+    conf.young_age_fitness_boost = 1;
+    conf.old_age_threshold = 3;
+    conf.species_max_stagnation = 100;
+    conf.young_age_fitness_boost = 1.1;
+    conf.old_age_fitness_penalty = 0.9;
 
     REQUIRE(not species.empty());
     REQUIRE(species.size() == 1);
@@ -84,13 +86,14 @@ TEST_CASE("Exception thrown with negative fitness" "[species]")
             std::make_unique<IndividualOptionalF>(451, -1),
             423);
 
-    Conf conf{
-            .young_age_threshold = 1,
-            .old_age_threshold = 3,
-            .species_max_stagnation = 100,
-            .young_age_fitness_boost = 1.1,
-            .old_age_fitness_penalty = 0.9,
-    };
+    Conf conf{};
+    conf.total_population_size = 1;
+    conf.crossover= false;
+    conf.young_age_fitness_boost = 1;
+    conf.old_age_threshold = 3;
+    conf.species_max_stagnation = 100;
+    conf.young_age_fitness_boost = 1.1;
+    conf.old_age_fitness_penalty = 0.9;
 
     REQUIRE(not species.empty());
     REQUIRE(species.size() == 1);
@@ -117,13 +120,14 @@ TEST_CASE("Species iterator" "[species]")
             individuals.begin(), individuals.end(),
             111);
 
-    Conf conf{
-            .young_age_threshold = 1,
-            .old_age_threshold = 3,
-            .species_max_stagnation = 100,
-            .young_age_fitness_boost = 1.1,
-            .old_age_fitness_penalty = 0.9,
-    };
+    Conf conf{};
+    conf.total_population_size = 1;
+    conf.crossover= false;
+    conf.young_age_fitness_boost = 1;
+    conf.old_age_threshold = 3;
+    conf.species_max_stagnation = 100;
+    conf.young_age_fitness_boost = 1.1;
+    conf.old_age_fitness_penalty = 0.9;
 
     REQUIRE(not species.empty());
     REQUIRE(species.size() == 3);

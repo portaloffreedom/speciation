@@ -44,7 +44,7 @@ public:
      * @param other
      */
     SpeciesCollection(SpeciesCollection &&other)
-        : collection(std::move(collection))
+        : collection(std::move(other.collection))
         , best(std::move(other.best))
         , cache_need_updating(other.cache_need_updating)
     {

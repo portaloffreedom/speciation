@@ -142,23 +142,15 @@ public:
 TEST_CASE("Test evolutionary run" "[integration]")
 {
     speciation::Genus<Individual,float> genus;
-    std::vector<std::unique_ptr<Individual>> initial_population;// = {
-    initial_population.reserve(10);
+    std::vector<std::unique_ptr<Individual>> initial_population;
+    initial_population.reserve(100);
 
-    const size_t GENOME_SIZE = 10;
-//    std::random_device rd;
+    const size_t GENOME_SIZE = 500;
     std::mt19937 gen(0);
 
-    initial_population.emplace_back(std::make_unique<Individual>(0, GENOME_SIZE, gen));
-    initial_population.emplace_back(std::make_unique<Individual>(1, GENOME_SIZE, gen));
-    initial_population.emplace_back(std::make_unique<Individual>(2, GENOME_SIZE, gen));
-    initial_population.emplace_back(std::make_unique<Individual>(3, GENOME_SIZE, gen));
-    initial_population.emplace_back(std::make_unique<Individual>(4, GENOME_SIZE, gen));
-    initial_population.emplace_back(std::make_unique<Individual>(5, GENOME_SIZE, gen));
-    initial_population.emplace_back(std::make_unique<Individual>(6, GENOME_SIZE, gen));
-    initial_population.emplace_back(std::make_unique<Individual>(7, GENOME_SIZE, gen));
-    initial_population.emplace_back(std::make_unique<Individual>(8, GENOME_SIZE, gen));
-    initial_population.emplace_back(std::make_unique<Individual>(9, GENOME_SIZE, gen));
+    for (size_t i=0; i<initial_population.capacity(); i++) {
+        initial_population.emplace_back(std::make_unique<Individual>(i, GENOME_SIZE, gen));
+    }
 
     int id_counter = static_cast<int>(initial_population.size());
 
@@ -179,7 +171,7 @@ TEST_CASE("Test evolutionary run" "[integration]")
 
     srand(1);
     auto selection = [&id_counter, &gen](auto begin, auto end) {
-        return speciation::tournament_selection<float>(begin, end, gen, 2);
+        return speciation::tournament_selection<float>(begin, end, gen, 6);
     };
     auto parent_selection = [&id_counter](auto begin, auto end) {
         return std::make_pair(begin,begin+1);
@@ -225,4 +217,6 @@ TEST_CASE("Test evolutionary run" "[integration]")
     } catch (const std::exception &e) {
         FAIL(e.what());
     }
+
+    std::cout <<"Evolution took " << generation_n << " generations to complete with a fitness of " << best_fitness << std::endl;
 }
