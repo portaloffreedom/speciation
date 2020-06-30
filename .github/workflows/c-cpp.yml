@@ -37,5 +37,9 @@ jobs:
     - name: compile
       run: cmake --build build/
     - name: test
-      run: ./build/tests/species_test
+      run: |
+        pwd
+        ls
+        ./species_test
+      working-directory: speciation/build/tests
       shell: bash
