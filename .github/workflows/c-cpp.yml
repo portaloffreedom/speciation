@@ -25,12 +25,12 @@ jobs:
       run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCATCH_BUILD_TESTING=OFF
       working-directory: Catch2
     - name: compile and install catch2
-      run: sudo make install
-      working-directory: Catch2/build
+      run: sudo cmake --build build/ --target install 
+      working-directory: Catch2
       if: matrix.os != 'windows-latest'
     - name: compile and install catch2 (windows)
-      run: make install
-      working-directory: Catch2/build
+      run: cmake --build build/ --target install 
+      working-directory: Catch2
       if: matrix.os == 'windows-latest'
     - name: cmake ${{ matrix.build_type }}
       run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
