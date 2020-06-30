@@ -13,20 +13,21 @@ jobs:
     strategy:
       matrix:
         build_type: [Debug, Release]
-#         os: [ubuntu-latest, windows-latest, macOS-latest]
-        os: [ubuntu-latest, macOS-latest]
+        os: [ubuntu-latest, windows-latest, macOS-latest]
 
     steps:
     - uses: actions/checkout@v2
-    - name: download catch2
-      run: git clone https://github.com/catchorg/Catch2.git
-      working-directory: /tmp
+    - uses: actions/checkout@v2
+      id: download catch2
+      with:
+        repository: catchorg/Catch2
+        path: Catch2
     - name: configure catch2
       run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DCATCH_BUILD_TESTING=OFF
-      working-directory: /tmp/Catch2
+      working-directory: Catch2
     - name: compile and install catch2
       run: sudo make install
-      working-directory: /tmp/Catch2/build
+      working-directory: Catch2/build
     - name: cmake ${{ matrix.build_type }}
       run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
     - name: make
