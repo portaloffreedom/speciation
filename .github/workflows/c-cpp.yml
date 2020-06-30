@@ -34,7 +34,7 @@ jobs:
       if: matrix.os == 'windows-latest'
     - name: cmake ${{ matrix.build_type }}
       run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-    - name: make
-      run: cd build && make -j4
+    - name: compile
+      run: cmake --build build/ --target build
     - name: test
       run: ./build/tests/species_test
