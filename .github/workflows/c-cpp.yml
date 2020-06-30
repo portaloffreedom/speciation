@@ -38,3 +38,7 @@ jobs:
       run: cmake --build build/
     - name: test
       run: ./build/tests/species_test
+      if: matrix.os != 'windows-latest'
+    - name: test
+      run: build\tests\species_test
+      if: matrix.os == 'windows-latest'
