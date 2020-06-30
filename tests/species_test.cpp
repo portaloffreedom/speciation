@@ -28,7 +28,7 @@ TEST_CASE("Species compile and are not broken" "[species]")
     conf.young_age_fitness_boost = 1.1;
     conf.old_age_fitness_penalty = 0.9;
 
-    REQUIRE(not species.empty());
+    REQUIRE_FALSE(species.empty());
     REQUIRE(species.size() == 1);
     REQUIRE(species.id() == 423);
     REQUIRE(species.representative().id == 41);
@@ -62,7 +62,7 @@ TEST_CASE("Individuals with optional fitness" "[species]")
     conf.young_age_fitness_boost = 1.1;
     conf.old_age_fitness_penalty = 0.9;
 
-    REQUIRE(not species.empty());
+    REQUIRE_FALSE(species.empty());
     REQUIRE(species.size() == 1);
     REQUIRE(species.id() == 423);
     REQUIRE(species.representative().id == 41);
@@ -95,7 +95,7 @@ TEST_CASE("Exception thrown with negative fitness" "[species]")
     conf.young_age_fitness_boost = 1.1;
     conf.old_age_fitness_penalty = 0.9;
 
-    REQUIRE(not species.empty());
+    REQUIRE_FALSE(species.empty());
     REQUIRE(species.size() == 1);
     REQUIRE(species.id() == 423);
 
@@ -129,7 +129,7 @@ TEST_CASE("Species iterator" "[species]")
     conf.young_age_fitness_boost = 1.1;
     conf.old_age_fitness_penalty = 0.9;
 
-    REQUIRE(not species.empty());
+    REQUIRE_FALSE(species.empty());
     REQUIRE(species.size() == 3);
     REQUIRE(species.id() == 111);
     REQUIRE(species.representative().id == 41);
@@ -146,7 +146,7 @@ TEST_CASE("Species iterator" "[species]")
     REQUIRE_FALSE(species.adjusted_fitness(2).has_value());
 
     for (const Species<IndividualOptionalF, float>::Indiv &indiv: species) {
-        REQUIRE(not indiv.adjusted_fitness.has_value());
+        REQUIRE_FALSE(indiv.adjusted_fitness.has_value());
     }
 
     REQUIRE_NOTHROW(species.adjust_fitness(false, conf));

@@ -161,7 +161,7 @@ public:
      */
     iterator get_best()
     {
-        assert(not collection.empty());
+        assert(!collection.empty());
 
         if (cache_need_updating)
             _update_cache();
