@@ -23,5 +23,8 @@ if (${ENABLE_TESTS})
     ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
 
     add_test(species_test species_test)
+    #add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
+    add_custom_target(check COMMAND species_test
+            DEPENDS species_test)
 
 endif()
