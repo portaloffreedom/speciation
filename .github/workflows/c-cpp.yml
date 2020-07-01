@@ -43,5 +43,5 @@ jobs:
     - name: compile
       run: cmake --build build/ --config ${{ matrix.build_type }}
     - name: test
-      run: cmake --build build/ --config ${{ matrix.build_type }} --target check_xml
+      run: cmake --build build/ --config ${{ matrix.build_type }} --target check
       
