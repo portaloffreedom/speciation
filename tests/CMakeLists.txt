@@ -13,6 +13,7 @@ if (${ENABLE_TESTS})
             genus_test.cpp
             selection_test.cpp
             evolution_test.cpp
+            conf_test.cpp
             )
     target_link_libraries(species_test
             speciation Catch2::Catch2)
