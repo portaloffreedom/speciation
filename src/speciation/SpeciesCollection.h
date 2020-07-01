@@ -19,12 +19,14 @@ namespace speciation {
  */
 template<typename I, typename F>
 class SpeciesCollection {
-    std::vector<Species<I,F> > collection;
-    typename std::vector<Species<I,F> >::iterator best;
-    bool cache_need_updating = true;
 public:
     typedef typename std::vector<Species<I, F> >::iterator iterator;
     typedef typename std::vector<Species<I, F> >::const_iterator const_iterator;
+protected:
+    std::vector<Species<I,F> > collection;
+    mutable iterator best;
+    mutable bool cache_need_updating = true;
+public:
 
     SpeciesCollection()
         : cache_need_updating(true)
@@ -121,12 +123,12 @@ public:
      * Computes the adjusted fitness for all species
      * @param conf Species configuration object
      */
-    void adjust_fitness(const Conf &conf)
+    void compute_adjust_fitness(const Conf &conf)
     {
         for (iterator species = collection.begin();
              species != collection.end(); species++)
         {
-            species->adjust_fitness(species == best, conf);
+            species->compute_adjust_fitness(species == best, conf);
         }
     }
 
@@ -135,7 +137,7 @@ public:
      *
      * The best species gets through a rejuvenating process
      */
-    void update()
+    void compute_update()
     {
         // The old best species will be invalid at the first iteration
         iterator old_best = get_best();
@@ -170,20 +172,38 @@ public:
     }
 
     /**
+     * Returns an iterator pointing to the best species.
+     * Be careful to not invalidate the iterator, by changing the underlying vector.
+     *
+     * @return the const iterator pointing to the best species
+     */
+    const_iterator get_best() const
+    {
+        assert(!collection.empty());
+
+        if (cache_need_updating)
+            _update_cache();
+
+        return best;
+    }
+
+    /**
      * Finds the worst species (based on the best fitness of that species)
      * Crashes if there are no species with at least `minimal_size` individuals
+     *
+     * This function is not const because it returns a modifiable iterator.
      *
      * @param minimal_size Species with less individuals than this will not be considered
      * @param exclude_id_list Species in this list will be ignored
      * @return the iterator pointing to the worst species
      */
-    iterator get_worst(size_t minimal_size, std::optional<std::set<unsigned int> > exclude_id_list = std::nullopt) {
+    const_iterator get_worst(size_t minimal_size, std::optional<std::set<unsigned int> > exclude_id_list = std::nullopt) const {
         assert(!collection.empty());
 
         F worst_species_fitness = -std::numeric_limits<F>::infinity();
-        typename std::vector<Species<I,F> >::iterator worst_species = collection.end();
+        const_iterator worst_species = collection.end();
 
-        for (typename std::vector<Species<I,F> >::iterator species = collection.begin(); species != collection.end(); species++) {
+        for (const_iterator species = collection.begin(); species != collection.end(); species++) {
             if (exclude_id_list.has_value() && exclude_id_list.value().count(species->id()) > 0 )
             {
                 continue;
@@ -226,13 +246,17 @@ private:
      *
      * WARNING: Cannot cache Worst value, because it's value depends on other parameters (minimal size and others)
      */
-    void _update_cache() {
+    void _update_cache() const {
         assert(!collection.empty());
+
+        // remove constness for the cache pointer (best is a non-const pointer)
+        std::vector<Species<I,F> > &mut_collection = const_cast<std::vector<Species<I,F> >& >(collection);
+
 
         // BEST
         best = std::max_element(
-                collection.begin(),
-                collection.end(),
+                mut_collection.begin(),
+                mut_collection.end(),
                 [](const Species<I,F> &a, const Species<I,F> &b)
             {
                 return a.get_best_individual()->individual->fitness() < b.get_best_individual()->individual->fitness();

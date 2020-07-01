@@ -145,7 +145,7 @@ TEST_CASE("Test evolutionary run" "[integration]")
     std::vector<std::unique_ptr<Individual> > initial_population;
     initial_population.reserve(100);
 
-    const size_t GENOME_SIZE = 500;
+    const size_t GENOME_SIZE = 400;
     std::mt19937 gen(0);
 
     for (size_t i=0; i<initial_population.capacity(); i++) {
@@ -200,19 +200,28 @@ TEST_CASE("Test evolutionary run" "[integration]")
     };
 
     unsigned int generation_n = 0;
+
+    genus.ensure_evaluated_population(evaluate);
+
     try {
         while (best_fitness < GENOME_SIZE) {
             generation_n++;
-            genus = genus.next_generation(
-                    conf,
-                    selection,
-                    parent_selection,
-                    crossover_1,
-                    crossover_2,
-                    mutate,
-                    population_manager,
-                    evaluate
-            );
+            genus = genus.update(conf)
+                    .next_generation(
+                            conf,
+                            selection,
+                            parent_selection,
+                            crossover_1,
+                            crossover_2,
+                            mutate,
+                            population_manager,
+                            evaluate
+                    );
+
+            if (generation_n > 1000)
+            {
+                FAIL("Couldn't find a solution in less than 1000 generations");
+            }
         }
     } catch (const std::exception &e) {
         FAIL(e.what());

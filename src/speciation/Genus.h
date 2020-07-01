@@ -104,6 +104,32 @@ public:
         }
     }
 
+    void ensure_evaluated_population(const std::function<F(I*)> &evaluate_individual)
+    {
+        for (const Species<I, F> &species: species_collection) {
+            for (const typename Species<I, F>::Indiv &i : species) {
+                std::optional<F> ready_fitness = i.individual->fitness();
+                if (!ready_fitness.has_value()) {
+                    F fitness = evaluate_individual(i.individual.get());
+                    std::optional<F> individual_fitness = i.individual->fitness();
+                    assert(individual_fitness.has_value());
+                    assert(fitness == individual_fitness.value());
+                }
+            }
+        }
+    }
+
+    Genus& update(const Conf &conf)
+    {
+        // Update species stagnation and stuff
+        species_collection.compute_update();
+
+        // Update adjusted fitnesses
+        species_collection.compute_adjust_fitness(conf);
+
+        return *this;
+    }
+
      /**
       * Creates the genus for the next generation.
       * The species are copied over so that `this` Genus is not invalidated.
@@ -128,25 +154,9 @@ public:
             const std::function<std::unique_ptr<I>(const I&, const I&)> &crossover_individual_2,
             const std::function<void(I&)> &mutate_individual,
             const std::function<std::vector<std::unique_ptr<I> >(std::vector<std::unique_ptr<I> > &&new_individuals, const std::vector<const I*>&old_individuals, unsigned int target_population)> &population_management,
-            const std::function<F(I*)> &evaluate_individual)
+            const std::function<F(I*)> &evaluate_individual) const
     {
-        for (Species<I, F> &species: species_collection) {
-            for (typename Species<I, F>::Indiv &i : species) {
-                std::optional<F> ready_fitness = i.individual->fitness();
-                if (!ready_fitness.has_value()) {
-                    F fitness = evaluate_individual(i.individual.get());
-                    std::optional<F> individual_fitness = i.individual->fitness();
-                    assert(individual_fitness.has_value());
-                    assert(fitness == individual_fitness.value());
-                }
-            }
-        }
-
-        // Update species stagnation and stuff
-        species_collection.update();
-
-        // Update adjusted fitnesses
-        species_collection.adjust_fitness(conf);
+        unsigned int local_next_species_id = this->next_species_id;
 
         // Calculate offspring amount
         std::vector<unsigned int> offspring_amounts = _count_offsprings(conf.total_population_size);
@@ -227,8 +237,8 @@ public:
                 }
             }
             if (!compatible_species_found) {
-                Species<I, F> new_species = Species<I, F>(std::move(orphan), next_species_id);
-                next_species_id++;
+                Species<I, F> new_species = Species<I, F>(std::move(orphan), local_next_species_id);
+                local_next_species_id++;
                 new_species_collection.add_species(std::move(new_species));
                 // add an entry for new species which does not have a previous iteration.
                 list_of_new_species.emplace_front(new_species_collection.back());
@@ -297,7 +307,7 @@ public:
 
         //////////////////////////////////////////////
         /// CREATE THE NEXT GENUS
-        return Genus(std::move(new_species_collection), this->next_species_id);
+        return Genus(std::move(new_species_collection), local_next_species_id);
     }
 private:
     /**
@@ -358,7 +368,7 @@ private:
      * @return a vector of integers representing the number of allocated individuals for each species.
      * The index of this list corresponds to the same index in `this->_species_list`.
      */
-    std::vector<unsigned int> _count_offsprings(unsigned int number_of_individuals)
+    std::vector<unsigned int> _count_offsprings(unsigned int number_of_individuals) const
     {
         assert(number_of_individuals > 0);
 
@@ -451,7 +461,7 @@ private:
      */
     void _correct_population_size(
             std::vector<unsigned int> &species_offspring_amount,
-            const int missing_offspring)
+            const int missing_offspring) const
     {
         // positive means lacking individuals
         if (missing_offspring > 0)
@@ -467,7 +477,7 @@ private:
             std::set<unsigned int> excluded_id_list;
 
             while (excess_offspring > 0) {
-                typename std::vector<Species<I, F> >::iterator worst_species =
+                typename std::vector<Species<I, F> >::const_iterator worst_species =
                         species_collection.get_worst(1, excluded_id_list);
                 size_t worst_species_i = std::distance(species_collection.begin(), worst_species);
                 int current_amount = species_offspring_amount[worst_species_i];

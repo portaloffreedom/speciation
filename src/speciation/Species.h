@@ -173,7 +173,7 @@ public:
      *
      * @param is_best_species true if this is the best species
      */
-    void adjust_fitness(bool is_best_species, const Conf& conf) {
+    void compute_adjust_fitness(bool is_best_species, const Conf& conf) {
         assert( !this->empty() );
 
         // Iterates through individuals and sets the adjusted fitness (second parameter of the pair)

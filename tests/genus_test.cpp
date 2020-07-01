@@ -74,17 +74,20 @@ TEST_CASE( "Instantiate a Genus with species" "[genus]")
         return fit;
     };
 
+    genus.ensure_evaluated_population(evaluate);
+
     try {
-        speciation::Genus genus1 = genus.next_generation(
-                conf,
-                selection,
-                parent_selection,
-                crossover_1,
-                crossover_2,
-                mutate,
-                population_manager,
-                evaluate
-        );
+        speciation::Genus genus1 = genus.update(conf)
+                .next_generation(
+                        conf,
+                        selection,
+                        parent_selection,
+                        crossover_1,
+                        crossover_2,
+                        mutate,
+                        population_manager,
+                        evaluate
+                );
     } catch (const std::exception &e) {
         FAIL(e.what());
     }

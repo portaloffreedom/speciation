@@ -34,12 +34,12 @@ TEST_CASE("Species compile and are not broken" "[species]")
     REQUIRE(species.representative().id == 41);
     REQUIRE(species.best_fitness() == 0);
 
-    species.adjust_fitness(false, conf);
+    species.compute_adjust_fitness(false, conf);
 
     REQUIRE(species.representative().id == 41);
     REQUIRE(species.best_fitness() == 42);
 
-    species.adjust_fitness(true, conf);
+    species.compute_adjust_fitness(true, conf);
 
     REQUIRE(species.representative().id == 41);
     REQUIRE(species.best_fitness() == 42);
@@ -68,12 +68,12 @@ TEST_CASE("Individuals with optional fitness" "[species]")
     REQUIRE(species.representative().id == 41);
     REQUIRE(species.best_fitness() == 0);
 
-    REQUIRE_NOTHROW(species.adjust_fitness(false, conf));
+    REQUIRE_NOTHROW(species.compute_adjust_fitness(false, conf));
 
     REQUIRE(species.representative().id == 41);
     REQUIRE(species.best_fitness() == 22);
 
-    REQUIRE_NOTHROW(species.adjust_fitness(true, conf));
+    REQUIRE_NOTHROW(species.compute_adjust_fitness(true, conf));
 
     REQUIRE(species.representative().id == 41);
     REQUIRE(species.best_fitness() == 22);
@@ -99,12 +99,12 @@ TEST_CASE("Exception thrown with negative fitness" "[species]")
     REQUIRE(species.size() == 1);
     REQUIRE(species.id() == 423);
 
-    REQUIRE_THROWS_AS(species.adjust_fitness(false, conf), invalid_fitness<float>);
+    REQUIRE_THROWS_AS(species.compute_adjust_fitness(false, conf), invalid_fitness<float>);
 
     REQUIRE(species.representative().id == 451);
     REQUIRE(species.best_fitness() != -1);
 
-    REQUIRE_THROWS_AS(species.adjust_fitness(true, conf), invalid_fitness<float>);
+    REQUIRE_THROWS_AS(species.compute_adjust_fitness(true, conf), invalid_fitness<float>);
 
     REQUIRE(species.representative().id == 451);
     REQUIRE(species.best_fitness() != -1);
@@ -149,7 +149,7 @@ TEST_CASE("Species iterator" "[species]")
         REQUIRE_FALSE(indiv.adjusted_fitness.has_value());
     }
 
-    REQUIRE_NOTHROW(species.adjust_fitness(false, conf));
+    REQUIRE_NOTHROW(species.compute_adjust_fitness(false, conf));
     REQUIRE(species.representative().id == 41);
     REQUIRE(species.best_fitness() == 22.1f);
 
@@ -169,7 +169,7 @@ TEST_CASE("Species iterator" "[species]")
         REQUIRE(indiv.adjusted_fitness < 100.);
     }
 
-    REQUIRE_NOTHROW(species.adjust_fitness(true, conf));
+    REQUIRE_NOTHROW(species.compute_adjust_fitness(true, conf));
     REQUIRE(species.representative().id == 41);
     REQUIRE(species.best_fitness() == 122.1f);
 
