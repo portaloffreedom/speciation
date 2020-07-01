@@ -260,15 +260,19 @@ public:
         for (Species<I, F> &new_species : new_species_collection) {
             if (species_i > species_collection.size()) {
                 // Finished. The new species keep the entire population.
+                std::cout << "POPULATION MANAGEMENT Finished. The new species keep the entire population." << std::endl;
                 break;
             }
+            std::cout << "POPULATION MANAGEMENT " << species_i << std::endl;
 
             std::vector<std::unique_ptr<I> > new_species_individuals(new_species.size());
             // this empties the new_species list
+            std::cout << "POPULATION MANAGEMENT " << species_i << " transform" << std::endl;
             std::transform(new_species.begin(), new_species.end(),
                            new_species_individuals.begin(),
                            [](typename Species<I, F>::Indiv &i) { return std::move(i.individual); });
 
+            std::cout << "POPULATION MANAGEMENT " << species_i << " lambda call" << std::endl;
             // Create next population
             std::vector<std::unique_ptr<I> > new_individuals
                     = population_management(std::move(new_species_individuals),
@@ -277,6 +281,7 @@ public:
 
             new_species.set_individuals(std::move(new_individuals));
 
+            std::cout << "POPULATION MANAGEMENT " << species_i << " done" << std::endl;
             species_i++;
         }
 
