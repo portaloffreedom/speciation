@@ -86,8 +86,11 @@ public:
     [[nodiscard]] std::optional<float> fitness() const override
     { return _fitness; }
 
+    [[nodiscard]] int get_id() const
+    { return this->id; }
+
     void set_fitness(float fit)
-    { _fitness = std::make_optional(fit); }
+    { _fitness = fit; }
 
     void set_id(int id)
     { this->id = id; }
