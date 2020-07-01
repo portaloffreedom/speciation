@@ -140,16 +140,18 @@ public:
 };
 
 #ifdef DEBUG
-#define GENOME_SIZE 100
+#define GENOME_SIZE 10
+#define POPULATION_SIZE 10
 #else
 #define GENOME_SIZE 400
+#define POPULATION_SIZE 100
 #endif
 
 TEST_CASE("Test evolutionary run" "[integration]")
 {
     speciation::Genus<Individual,float> genus;
     std::vector<std::unique_ptr<Individual> > initial_population;
-    initial_population.reserve(100);
+    initial_population.reserve(POPULATION_SIZE);
 
     std::mt19937 gen(0);
 
@@ -234,3 +236,6 @@ TEST_CASE("Test evolutionary run" "[integration]")
 
     std::cout <<"Evolution took " << generation_n << " generations to complete with a fitness of " << best_fitness << std::endl;
 }
+
+#undef GENOME_SIZE
+#undef POPULATION_SIZE
