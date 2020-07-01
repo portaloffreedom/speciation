@@ -43,14 +43,5 @@ jobs:
     - name: compile
       run: cmake --build build/ --config ${{ matrix.build_type }}
     - name: test
-      run: ./species_test
-      working-directory: build/tests
-      if: matrix.os != 'windows-latest'
-    - name: test (windows)
-      run: |
-        echo $PWD
-        ls -R
-        ./species_test.exe
-      working-directory: build/tests/${{ matrix.build_type }}
-      if: matrix.os == 'windows-latest'
+      run: cmake --build build/ --config ${{ matrix.build_type }} --target check
       
