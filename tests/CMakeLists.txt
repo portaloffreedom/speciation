@@ -16,6 +16,12 @@ if (${ENABLE_TESTS})
             )
     target_link_libraries(species_test
             speciation Catch2::Catch2)
+
+    IF(CMAKE_BUILD_TYPE MATCHES Debug)
+        target_compile_definitions(species_test PRIVATE
+                DEBUG=${CMAKE_BUILD_TYPE})
+    ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
+
     add_test(species_test species_test)
 
 endif()

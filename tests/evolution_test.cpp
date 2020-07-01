@@ -139,13 +139,18 @@ public:
     }
 };
 
+#ifdef DEBUG
+#define GENOME_SIZE 100
+#else
+#define GENOME_SIZE 400
+#endif
+
 TEST_CASE("Test evolutionary run" "[integration]")
 {
     speciation::Genus<Individual,float> genus;
     std::vector<std::unique_ptr<Individual> > initial_population;
     initial_population.reserve(100);
 
-    const size_t GENOME_SIZE = 400;
     std::mt19937 gen(0);
 
     for (size_t i=0; i<initial_population.capacity(); i++) {
