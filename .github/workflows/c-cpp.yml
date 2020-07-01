@@ -47,7 +47,10 @@ jobs:
       working-directory: build/tests
       if: matrix.os != 'windows-latest'
     - name: test (windows)
-      run: echo $PWD && ls -R && species_test.exe
+      run: |
+        echo $PWD
+        ls -R
+        ./species_test.exe
       working-directory: build/tests/${{ matrix.build_type }}
       if: matrix.os == 'windows-latest'
       
