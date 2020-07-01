@@ -62,11 +62,11 @@ TEST_CASE( "Instantiate a Genus with species" "[genus]")
         return std::make_pair(begin,begin+1);
     };
     auto crossover_1 = [&id_counter](const ChildIndividual &parent) -> std::unique_ptr<ChildIndividual> {
-        std::cout << "crossover_1 " << parent.get_id() << "=>" << (id_counter+1) << std::endl;
+        std::cout << "crossover_1 " << parent.get_id() << "=>" << id_counter << std::endl;
         return std::make_unique<ChildIndividual>(id_counter++);
     };
     auto crossover_2 = [&id_counter](const ChildIndividual &parent_a, const ChildIndividual &parent_b) -> std::unique_ptr<ChildIndividual> {
-        std::cout << "crossover_2 " << parent_a.get_id() << '+' << parent_b.get_id() << "=>" << (id_counter+1) << std::endl;
+        std::cout << "crossover_2 " << parent_a.get_id() << '+' << parent_b.get_id() << "=>" << id_counter << std::endl;
         return std::make_unique<ChildIndividual>(id_counter++);
     };
     auto mutate = [](ChildIndividual &indiv) {
@@ -78,7 +78,9 @@ TEST_CASE( "Instantiate a Genus with species" "[genus]")
                                             const std::vector<const ChildIndividual*> &old_pop,
                                             unsigned int pop_amount) -> std::vector<std::unique_ptr<ChildIndividual> > {
         std::cout << "population_manager " << std::endl;
-        return std::vector<std::unique_ptr<ChildIndividual> >(std::move(new_pop));
+        std::vector<std::unique_ptr<ChildIndividual> > result = std::vector<std::unique_ptr<ChildIndividual> >(std::move(new_pop));
+        std::cout << "population_manager end" << std::endl;
+        return std::move(result);
     };
     auto evaluate = [&gen](ChildIndividual *new_indiv) {
         std::cout << "Evaluating " << new_indiv->get_id() << std::endl;
