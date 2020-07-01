@@ -8,7 +8,7 @@
 #include "catch2/catch.hpp"
 #include "test_individuals.h"
 
-TEST_CASE( "Instantiate a Conf" "[conf]")
+TEST_CASE( "Instantiate a Conf", "[conf]" )
 {
     speciation::Conf conf{};
 }
@@ -17,7 +17,7 @@ struct ExtendedConf : public speciation::Conf {
     std::optional<float> test_variable;
 };
 
-TEST_CASE( "Instantiate a derived conf and use it" "[conf]")
+TEST_CASE( "Instantiate a derived conf and use it", "[conf]" )
 {
     speciation::Genus<ChildIndividual,float> genus;
     std::vector<std::unique_ptr<ChildIndividual>> initial_population;// = {
