@@ -139,12 +139,16 @@ public:
     }
 };
 
+#define STRINGIFY2( x) #x
+#define STRINGIFY(x) STRINGIFY2(x)
 #ifdef DEBUG
 #define GENOME_SIZE 10
 #define POPULATION_SIZE 10
+#define MAX_GENERATIONS 100
 #else
 #define GENOME_SIZE 400
 #define POPULATION_SIZE 100
+#define MAX_GENERATIONS 1000
 #endif
 
 TEST_CASE("Test evolutionary run" "[integration]")
@@ -213,6 +217,7 @@ TEST_CASE("Test evolutionary run" "[integration]")
     try {
         while (best_fitness < GENOME_SIZE) {
             generation_n++;
+            std::cout << "starting generation " << generation_n << std::endl;
             genus = genus.update(conf)
                     .next_generation(
                             conf,
@@ -225,9 +230,9 @@ TEST_CASE("Test evolutionary run" "[integration]")
                             evaluate
                     );
 
-            if (generation_n > 1000)
+            if (generation_n > MAX_GENERATIONS)
             {
-                FAIL("Couldn't find a solution in less than 1000 generations");
+                FAIL("Couldn't find a solution in less than " STRINGIFY(MAX_GENERATIONS) " generations");
             }
         }
     } catch (const std::exception &e) {
@@ -239,3 +244,4 @@ TEST_CASE("Test evolutionary run" "[integration]")
 
 #undef GENOME_SIZE
 #undef POPULATION_SIZE
+#undef MAX_GENERATIONS
