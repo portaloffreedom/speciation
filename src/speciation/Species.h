@@ -10,6 +10,7 @@
 #include <memory>
 #include <limits>
 #include <vector>
+#include <iostream>
 #include "Age.h"
 #include "Conf.h"
 #include "exceptions.h"
@@ -205,12 +206,17 @@ public:
      */
      void set_individuals(std::vector<std::unique_ptr<I> > &&new_individuals)
      {
+        std::cout << "set_individuals(this=" << id() << ')' << std::endl;
         individuals.clear();
+        std::cout << "set_individuals(this=" << id() << ") reserve" << std::endl;
         individuals.reserve(new_individuals.size());
         for (std::unique_ptr<I> &individual: new_individuals) {
+            std::cout << "set_individuals(individual=" << individual.get() << ") finished" << std::endl;
             individuals.emplace_back(std::move(individual));
         }
+        std::cout << "set_individuals(this=" << id() << ") shrink_to_fit" << std::endl;
         individuals.shrink_to_fit();
+        std::cout << "set_individuals(this=" << id() << ") finished" << std::endl;
      }
 
     iterator begin() {

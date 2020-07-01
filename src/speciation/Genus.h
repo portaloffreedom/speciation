@@ -285,7 +285,7 @@ public:
         /// ASSERT SECTION
         /// check species IDs [complicated assert]
         std::set<unsigned int> species_ids;
-        for (Species<I, F> &species: new_species_collection) {
+        for (const Species<I, F> &species: new_species_collection) {
             if (species_ids.count(species.id()) > 0) {
                 std::stringstream error_message;
                 error_message << "Species (" << species.id() << ") present twice!";
