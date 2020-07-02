@@ -98,7 +98,7 @@ public:
     [[nodiscard]] bool is_compatible(const ChildIndividual &) const override
     { return rand() % 2; }
 
-    [[nodiscard]] ChildIndividual clone() const
+    [[nodiscard]] ChildIndividual clone() const override
     { return ChildIndividual(*this); }
 };
 
