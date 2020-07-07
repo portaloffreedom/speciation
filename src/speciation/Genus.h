@@ -6,6 +6,7 @@
 #define SPECIATION_GENUS_H
 
 #include "SpeciesCollection.h"
+#include "GenusSeed.h"
 #include <forward_list>
 #include <cmath>
 #include <iostream>
@@ -147,17 +148,15 @@ public:
       * @param evaluate_individual function to evaluate new individuals
       * @return the genus of the next generation
       */
-    Genus next_generation(
+     GenusSeed<I,F> generate_new_individuals(
             const Conf &conf,
             const std::function<typename Species<I,F>::const_iterator (typename Species<I,F>::const_iterator, typename Species<I,F>::const_iterator)> &selection,
             const std::function<std::pair<typename Species<I,F>::const_iterator,typename Species<I,F>::const_iterator>(typename Species<I,F>::const_iterator, typename Species<I,F>::const_iterator)> &parent_selection,
             const std::function<std::unique_ptr<I>(const I&)> &reproduce_individual_1,
             const std::function<std::unique_ptr<I>(const I&, const I&)> &crossover_individual_2,
-            const std::function<void(I&)> &mutate_individual,
-            const std::function<std::vector<std::unique_ptr<I> >(std::vector<std::unique_ptr<I> > &&new_individuals, const std::vector<const I*>&old_individuals, unsigned int target_population)> &population_management,
-            const std::function<F(I*)> &evaluate_individual) const
+            const std::function<void(I&)> &mutate_individual
+    ) const
     {
-        unsigned int local_next_species_id = this->next_species_id;
 
         // Calculate offspring amount
         std::vector<unsigned int> offspring_amounts = _count_offsprings(conf.total_population_size);
@@ -214,23 +213,29 @@ public:
             species_i++;
         }
 
-        //////////////////////////////////////////////
-        /// EVALUATE NEW INDIVIDUALS
-        // TODO add here recovered individuals [partial recovery]
-        for (I *new_individual : need_evaluation) {
-            F fitness = evaluate_individual(new_individual);
-            std::optional<F> individual_fitness = new_individual->fitness();
-            assert(individual_fitness.has_value());
-            assert(fitness == individual_fitness.value());
-        }
+        return GenusSeed(
+                std::move(orphans),
+                std::move(new_species_collection),
+                std::move(need_evaluation),
+                std::move(old_species_individuals));
+    }
+
+    Genus next_generation(const Conf &conf,
+                          GenusSeed<I, F> &&generated_individuals,
+                          const std::function<std::vector<std::unique_ptr<I> >(
+                                  std::vector<std::unique_ptr<I> > &&new_individuals,
+                                  const std::vector<const I *> &old_individuals,
+                                  unsigned int target_population)> &population_management) const
+    {
+        unsigned int local_next_species_id = this->next_species_id;
 
         //////////////////////////////////////////////
         /// MANAGE ORPHANS, POSSIBLY CREATE NEW SPECIES
         /// recheck if other species can adopt the orphans individuals.
         std::forward_list<std::reference_wrapper<Species<I, F>>> list_of_new_species;
-        for (std::unique_ptr<I> &orphan : orphans) {
+        for (std::unique_ptr<I> &orphan : generated_individuals.orphans) {
             bool compatible_species_found = false;
-            for (Species<I, F> &species : new_species_collection) {
+            for (Species<I, F> &species : generated_individuals.new_species_collection) {
                 if (species.is_compatible(*orphan)) {
                     species.insert(std::move(orphan));
                     compatible_species_found = true;
@@ -240,15 +245,15 @@ public:
             if (!compatible_species_found) {
                 Species<I, F> new_species = Species<I, F>(std::move(orphan), local_next_species_id);
                 local_next_species_id++;
-                new_species_collection.add_species(std::move(new_species));
+                generated_individuals.new_species_collection.add_species(std::move(new_species));
                 // add an entry for new species which does not have a previous iteration.
-                list_of_new_species.emplace_front(new_species_collection.back());
+                list_of_new_species.emplace_front(generated_individuals.new_species_collection.back());
             }
         }
 
         // Do a recount on the number of offspring per species
         unsigned int new_population_size = 0; //TODO list_of_new_species.count_individuals();
-        offspring_amounts = _count_offsprings(conf.total_population_size - new_population_size);
+        std::vector<unsigned int> offspring_amounts = _count_offsprings(conf.total_population_size - new_population_size);
         // If this assert fails, the next population size is going to be different
         assert(std::accumulate(offspring_amounts.begin(), offspring_amounts.end(), 0u) ==
                conf.total_population_size - new_population_size);
@@ -257,8 +262,8 @@ public:
         //////////////////////////////////////////////
         /// POPULATION MANAGEMENT
         /// update the species population, based ont he population management algorithm.
-        species_i = 0;
-        for (Species<I, F> &new_species : new_species_collection) {
+        int species_i = 0;
+        for (Species<I, F> &new_species : generated_individuals.new_species_collection) {
             if (species_i > species_collection.size()) {
                 // Finished. The new species keep the entire population.
                 std::cout << "POPULATION MANAGEMENT Finished. The new species keep the entire population." << std::endl;
@@ -277,7 +282,7 @@ public:
             // Create next population
             std::vector<std::unique_ptr<I> > new_individuals
                     = population_management(std::move(new_species_individuals),
-                                            old_species_individuals[species_i],
+                                            generated_individuals.old_species_individuals[species_i],
                                             offspring_amounts[species_i]);
 
             new_species.set_individuals(std::move(new_individuals));
@@ -291,7 +296,7 @@ public:
         /// ASSERT SECTION
         /// check species IDs [complicated assert]
         std::set<unsigned int> species_ids;
-        for (const Species<I, F> &species: new_species_collection) {
+        for (const Species<I, F> &species: generated_individuals.new_species_collection) {
             if (species_ids.count(species.id()) > 0) {
                 std::stringstream error_message;
                 error_message << "Species (" << species.id() << ") present twice!";
@@ -300,10 +305,10 @@ public:
             species_ids.insert(species.id());
         }
 
-        new_species_collection.cleanup();
+        generated_individuals.new_species_collection.cleanup();
 
         // Assert species list size and number of individuals
-        size_t n_individuals = new_species_collection.count_individuals();
+        size_t n_individuals = generated_individuals.new_species_collection.count_individuals();
         if (n_individuals != conf.total_population_size) {
             std::stringstream error_message;
             error_message << "count_individuals(new_species_collection) = " << n_individuals << " != "
@@ -313,7 +318,7 @@ public:
 
         //////////////////////////////////////////////
         /// CREATE THE NEXT GENUS
-        return Genus(std::move(new_species_collection), local_next_species_id);
+        return Genus(std::move(generated_individuals.new_species_collection), local_next_species_id);
     }
 private:
     /**

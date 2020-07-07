@@ -96,17 +96,21 @@ TEST_CASE( "Instantiate a Genus with species" "[genus]")
         std::cout << "Generation 0 updating" << std::endl;
         genus.update(conf);
         std::cout << "Generation 1 generating" << std::endl;
-        speciation::Genus genus1 = genus
-                .next_generation(
+        speciation::GenusSeed generated_individuals = genus
+                .generate_new_individuals(
                         conf,
                         selection,
                         parent_selection,
                         crossover_1,
                         crossover_2,
-                        mutate,
-                        population_manager,
-                        evaluate
+                        mutate
                 );
+
+        generated_individuals.evaluate(evaluate);
+
+        speciation::Genus genus1 = genus.next_generation(conf,
+                                                         std::move(generated_individuals),
+                                                         population_manager);
         std::cout << "Generation 1 done" << std::endl;
     } catch (const std::exception &e) {
         FAIL(e.what());

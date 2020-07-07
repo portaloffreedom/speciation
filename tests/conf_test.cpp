@@ -82,17 +82,21 @@ TEST_CASE( "Instantiate a derived conf and use it", "[conf]" )
     genus.ensure_evaluated_population(evaluate);
 
     try {
-        speciation::Genus genus1 = genus.update(conf)
-                .next_generation(
+        speciation::GenusSeed generated_individuals = genus.update(conf)
+                .generate_new_individuals(
                         conf,
                         selection,
                         parent_selection,
                         crossover_1,
                         crossover_2,
-                        mutate,
-                        population_manager,
-                        evaluate
+                        mutate
                 );
+
+        generated_individuals.evaluate(evaluate);
+
+        speciation::Genus genus1 = genus.next_generation(conf,
+                                                         std::move(generated_individuals),
+                                                         population_manager);
     } catch (const std::exception &e) {
         FAIL(e.what());
     }

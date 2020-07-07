@@ -217,17 +217,21 @@ TEST_CASE("Test evolutionary run" "[integration]")
         while (best_fitness < GENOME_SIZE) {
             generation_n++;
             std::cout << "starting generation " << generation_n << std::endl;
-            genus = genus.update(conf)
-                    .next_generation(
+            speciation::GenusSeed generated_individuals = genus.update(conf)
+                    .generate_new_individuals(
                             conf,
                             selection,
                             parent_selection,
                             crossover_1,
                             crossover_2,
-                            mutate,
-                            population_manager,
-                            evaluate
+                            mutate
                     );
+
+            generated_individuals.evaluate(evaluate);
+
+            genus = genus.next_generation(conf,
+                                          std::move(generated_individuals),
+                                          population_manager);
 
             if (generation_n > MAX_GENERATIONS)
             {

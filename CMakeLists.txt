@@ -12,6 +12,7 @@ target_sources(speciation INTERFACE
         ${speciation_include_dir}/speciation/Species.h
         ${speciation_include_dir}/speciation/Age.h
         ${speciation_include_dir}/speciation/Individual.h
+        ${speciation_include_dir}/speciation/GenusSeed.h
         ${speciation_include_dir}/speciation/Conf.h
         ${speciation_include_dir}/speciation/exceptions.h
         ${speciation_include_dir}/speciation/SpeciesCollection.h
