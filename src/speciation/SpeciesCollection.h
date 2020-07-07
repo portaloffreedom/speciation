@@ -20,8 +20,9 @@ namespace speciation {
 template<typename I, typename F>
 class SpeciesCollection {
 public:
-    typedef typename std::vector<Species<I, F> >::iterator iterator;
-    typedef typename std::vector<Species<I, F> >::const_iterator const_iterator;
+    using iterator = typename std::vector<Species<I, F> >::iterator;
+    using const_iterator = typename std::vector<Species<I, F> >::const_iterator;
+
 protected:
     std::vector<Species<I,F> > collection;
     mutable iterator best;

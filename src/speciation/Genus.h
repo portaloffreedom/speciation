@@ -55,8 +55,9 @@ public:
      */
     Genus& operator=(Genus &&other) noexcept
     {
-        if (this == &other)
+        if (this == &other) {
             return *this;
+        }
 
         next_species_id = other.next_species_id;
         species_collection = std::move(other.species_collection);
@@ -338,23 +339,19 @@ private:
             const std::function<std::pair<Iter,Iter>(Iter, Iter)> &parent_selection,
             const std::function<std::unique_ptr<I>(const I&)> &reproduce_1,
             const std::function<std::unique_ptr<I>(const I&, const I&)> &reproduce_2,
-            const std::function<void(I&)> &mutate
-    ) const
+            const std::function<void(I&)> &mutate) const
     {
         size_t parent_pool_size = std::distance(population_begin, pop_end);
         assert(parent_pool_size > 0);
 
         // Crossover
         std::unique_ptr<I> child;
-        if (conf.crossover && parent_pool_size > 1)
-        {
+        if (conf.crossover && parent_pool_size > 1) {
             std::pair<Iter,Iter> parents = parent_selection(population_begin, pop_end);
             const I &parent1 = (*parents.first->individual);
             const I &parent2 = (*parents.second->individual);
             child = reproduce_2(parent1, parent2);
-        }
-        else
-        {
+        } else {
             Iter parent_iter = selection(population_begin, pop_end);
             const I &parent = (*parent_iter->individual);
             child = reproduce_1(parent);

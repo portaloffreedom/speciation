@@ -44,8 +44,8 @@ public:
                 , individual(std::move(other.individual))
         {};
     };
-    typedef typename std::vector<Indiv>::iterator iterator;
-    typedef typename std::vector<Indiv>::const_iterator const_iterator;
+    using iterator = typename std::vector<Indiv>::iterator;
+    using const_iterator = typename std::vector<Indiv>::const_iterator;
 private:
 
     /// List of individuals and adjusted fitness
