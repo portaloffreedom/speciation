@@ -84,7 +84,7 @@ public:
     Species(const Species &) = delete;
     Species(Species &&other) noexcept
             : _id(other._id)
-            , age(age)
+            , age(other.age)
             , last_best_fitness(0.0)
             , individuals(std::move(other.individuals))
     {}

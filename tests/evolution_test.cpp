@@ -180,7 +180,6 @@ TEST_CASE("Test evolutionary run" "[integration]")
 
     float best_fitness = -std::numeric_limits<float>::infinity();
 
-    srand(1);
     auto selection = [&id_counter, &gen](auto begin, auto end) {
         return speciation::tournament_selection<float>(begin, end, gen, 6);
     };
