@@ -426,7 +426,7 @@ private:
         // Calculate the average adjusted fitness
         F average_adjusted_fitness = total_adjusted_fitness / static_cast<F>(number_of_individuals);
 
-        return total_adjusted_fitness;
+        return average_adjusted_fitness;
     }
 
     /**
